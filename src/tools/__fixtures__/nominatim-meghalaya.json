@@ -1,0 +1,29 @@
+[
+  {
+    "place_id": 241532399,
+    "licence": "Data © OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+    "osm_type": "relation",
+    "osm_id": 2027521,
+    "lat": "25.5379432",
+    "lon": "91.2999102",
+    "class": "boundary",
+    "type": "administrative",
+    "place_rank": 8,
+    "importance": 0.5973295482851384,
+    "addresstype": "state",
+    "name": "Meghalaya",
+    "display_name": "Meghalaya, India",
+    "address": {
+      "state": "Meghalaya",
+      "ISO3166-2-lvl4": "IN-ML",
+      "country": "India",
+      "country_code": "in"
+    },
+    "boundingbox": [
+      "25.0306475",
+      "26.1181651",
+      "89.8144440",
+      "92.8027367"
+    ]
+  }
+]
