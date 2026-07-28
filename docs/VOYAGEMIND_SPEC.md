@@ -270,6 +270,11 @@ Can return work to the Itinerary Agent. Hard cap of 2 revision rounds.
 
 Formats the final output. Explains reasoning and surfaces open questions and assumptions.
 
+**Phase 1, not Phase 0** (decided 2026-07-28). Phase 0 ends at a validated `Itinerary`
+JSON object, pretty-printed by the CLI — see §11. Output formatting is a decision about a
+rendering surface, and Phase 0 has no rendering surface yet beyond a terminal; designing
+Writer's prose before the React frontend exists means designing it twice.
+
 ## 7.2 The tool layer — not agents
 
 | Original "agent" | What it actually is | Where it lives |
@@ -316,9 +321,10 @@ User request
      +--- revise -------------+
      |
      v  pass
-[Writer Agent]
-     |
-     v
+=================================  Phase 0 ends here — validated Itinerary
+[Writer Agent]                     JSON, pretty-printed by the CLI. Writer
+     |                              and human review are Phase 1, alongside
+     v                              the frontend Writer's output is for.
 Human review  ---> Save trip
 ```
 
@@ -407,6 +413,16 @@ Cache destination research aggressively — a city's attractions do not change w
 Subagent-heavy workflows can run several times the token cost of a single-threaded session;
 the five-agent design in §7 exists partly to keep that multiplier survivable.
 
+**Measured latency (2026-07-28):** a single Overpass query over the full Meghalaya bounding
+box (~300km across, all categories) took **43 seconds**, before any model call. With
+`maxParallelResearch` at 4, one Guide call alone is comfortably in double-digit seconds once
+its own model turn is added, and the full pipeline — N parallel Guides, then Itinerary, then
+up to 2 Critic/Itinerary revision rounds — is **comfortably 90s+ end to end**. This is the
+concrete number behind CLAUDE.md's orchestrator rule ("the orchestrator emits progress events
+from day one"): a 30–90 second wait with no feedback is not a UI polish question, it's the
+difference between a working product and one that looks hung. The Phase 1 frontend's need for
+SSE streaming rests on this measurement, not an estimate.
+
 **Development is currently running on a Claude Code subscription session, not metered API
 credit.** Before anything runs unattended or serves a second user, this needs a proper API
 key with a spend cap.
@@ -418,23 +434,30 @@ key with a spend cap.
 ### Phase 0 — Walking skeleton ← YOU ARE HERE
 One vertical slice, working end to end, for one hardcoded destination type.
 
+Four agents, not five — Writer is Phase 1 (decided 2026-07-28, see §7.1). Phase 0's
+"user-facing" output is validated JSON, pretty-printed by the CLI; there is no prose
+formatting step until there's a frontend for Writer to format for.
+
 - [x] Schemas for the full pipeline
 - [x] Shared agent runner with validation and capped retry
 - [x] Intake Agent, 10/10 evals
 - [x] Deterministic feasibility checks
 - [x] Currency tool
-- [ ] **Places tool — real API, real data** ← next
-- [ ] Guide Agent
-- [ ] Itinerary Agent
+- [x] Places tool — real API, real data (Overpass, geocode.ts for bbox/centre/country)
+- [x] Guide Agent, 3/3 evals
+- [ ] **Itinerary Agent** ← next, built as a pair with Critic
 - [ ] Critic Agent
-- [ ] Orchestrator wiring the five together
-- [ ] CLI produces a real, feasible 4-day Meghalaya itinerary
+- [ ] Orchestrator wiring Intake, Guide, Itinerary, and Critic together
+- [ ] CLI produces a real, feasible 4-day Meghalaya itinerary as validated JSON
 
-**Done when:** Story 1 works from the command line. No UI, no database, no auth.
+**Done when:** Story 1 works from the command line, printing validated `Itinerary` JSON.
+No UI, no database, no auth, no prose formatting.
 
 ### Phase 1 — Product
 - Neon Postgres persistence, trip versions, migrations
 - React frontend, streaming progress
+- **Writer Agent** — `Itinerary` → user-facing plan, built alongside the frontend it renders
+  for (moved from the Phase 0 agent list — see §7.1)
 - Auth and user accounts
 - Trip CRUD, save, revisit
 

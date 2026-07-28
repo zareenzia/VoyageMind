@@ -9,11 +9,16 @@ Full product spec: `docs/VOYAGEMIND_SPEC.md`. Setup history and debugging log:
 
 ```
 Intake     free text          ->  TripBrief          [BUILT]
-Guide      TripBrief          ->  Destination[]      (parallel, capped)
+Guide      TripBrief          ->  Destination[]      (parallel, capped)   [BUILT]
 Itinerary  Destination[]      ->  Itinerary
 Critic     Itinerary          ->  CritiqueResult     (pass | revise | infeasible)
-Writer     Itinerary          ->  user-facing plan
+--------------------------------------------------------------  Phase 0 ends here
+Writer     Itinerary          ->  user-facing plan                        [PHASE 1]
 ```
+
+**Writer is Phase 1, not Phase 0** (decided 2026-07-28, see spec §7.1 and §11). Phase 0 ends
+at a validated `Itinerary` JSON object, pretty-printed by the CLI — no prose formatting until
+the frontend Writer's output is designed for actually exists.
 
 The Critic can return work to the Itinerary agent. **Maximum 2 revision rounds**, enforced in
 `orchestrator.ts`, never left to the model's discretion.
@@ -120,21 +125,28 @@ npm run typecheck               # tsc --noEmit
 ## Current state
 
 **Built:** schemas for the whole pipeline · `runAgent` (validation, capped retry,
-schema-derived prompts) · Intake agent at 10/10 evals · `checks/feasibility.ts` ·
-`tools/currency.ts` (reference implementation for tools)
+schema-derived prompts, plus an optional post-schema `validate` hook for business
+rules like provenance) · Intake agent at 10/10 evals · Guide agent at 3/3 evals ·
+`checks/feasibility.ts` (budget, day feasibility, terrain-tiered transit-time
+estimate) · `tools/currency.ts`, `tools/places.ts`, `tools/geocode.ts`,
+`tools/elevation.ts`
 
 **Phase 0, in order:**
-1. `PlaceCandidate` schema + `estimated` flags on `ActivitySchema` — schema work first.
-2. `tools/places.ts` — Overpass wrapper. Facts only, cached, rate-limited. No model calls.
-3. Guide agent (replaces the `research.ts` stub) — `TripBrief` -> `Destination[]`, parallel,
-   capped by `LIMITS.maxParallelResearch`.
-4. Itinerary and Critic — build as a pair; they only make sense together.
+1. ~~`PlaceCandidate` schema + `estimated` flags on `ActivitySchema`~~ — done.
+2. ~~`tools/places.ts` — Overpass wrapper~~ — done, plus `tools/geocode.ts` (Nominatim:
+   bbox/centre/country) which turned out to be a prerequisite.
+3. ~~Guide agent~~ — done, 3/3 evals.
+4. **Itinerary and Critic** ← next — build as a pair; they only make sense together.
 5. `orchestrator.ts` — last, once the agents it coordinates each pass their evals.
 
 **Phase 0 is done when** `npm run dev -- "4 days in Meghalaya, BDT 45,000"` produces a
-feasible itinerary with estimated values correctly marked.
+feasible **validated `Itinerary` JSON object, pretty-printed by the CLI**, with estimated
+values correctly marked. Writer's prose formatting is Phase 1 — see the Pipeline section
+above.
 
-**Stubs:** `src/agents/{research,itinerary,critic}.ts` are placeholders.
+**Stubs:** `src/agents/{itinerary,critic}.ts` are placeholders. `src/agents/research.ts`
+is no longer a stub — it's the Guide agent (the filename is a holdover; see the file's
+own header comment).
 
 ## Things not to do
 
