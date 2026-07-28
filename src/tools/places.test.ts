@@ -190,14 +190,14 @@ describe("parseOverpassResponse — synthetic edge cases not present in the reco
 });
 
 describe("buildOverpassQuery", () => {
-  const base = { lat: 25.27, lng: 91.73, radiusKm: 10 };
+  const radiusArea = { kind: "radius" as const, lat: 25.27, lng: 91.73, radiusKm: 10 };
 
   it("always requests `out center;`, since ways/relations have no lat/lon without it", () => {
-    expect(buildOverpassQuery({ ...base, categories: ["museum"] })).toContain("out center;");
+    expect(buildOverpassQuery({ area: radiusArea, categories: ["museum"] })).toContain("out center;");
   });
 
   it("queries both natural=waterfall and waterway=waterfall for the 'waterfall' category", () => {
-    const query = buildOverpassQuery({ ...base, categories: ["waterfall"] });
+    const query = buildOverpassQuery({ area: radiusArea, categories: ["waterfall"] });
     expect(query).toContain(`["natural"="waterfall"]`);
     expect(query).toContain(`["waterway"="waterfall"]`);
     for (const elementType of ["node", "way", "relation"]) {
@@ -207,19 +207,31 @@ describe("buildOverpassQuery", () => {
   });
 
   it("uses a sorted regex alternation for a key with multiple requested values", () => {
-    const query = buildOverpassQuery({ ...base, categories: ["monument", "historic_site"] });
+    const query = buildOverpassQuery({ area: radiusArea, categories: ["monument", "historic_site"] });
     expect(query).toContain(`["historic"~"^(archaeological_site|castle|fort|memorial|monument|ruins)$"]`);
   });
 
   it("produces an identical query regardless of the order categories were requested in", () => {
-    const a = buildOverpassQuery({ ...base, categories: ["park", "museum", "waterfall"] });
-    const b = buildOverpassQuery({ ...base, categories: ["waterfall", "museum", "park"] });
+    const a = buildOverpassQuery({ area: radiusArea, categories: ["park", "museum", "waterfall"] });
+    const b = buildOverpassQuery({ area: radiusArea, categories: ["waterfall", "museum", "park"] });
     expect(a).toBe(b);
   });
 
   it("converts radiusKm to meters in the around clause", () => {
-    const query = buildOverpassQuery({ ...base, radiusKm: 2.5, categories: ["museum"] });
+    const query = buildOverpassQuery({
+      area: { ...radiusArea, radiusKm: 2.5 },
+      categories: ["museum"],
+    });
     expect(query).toContain("around:2500,25.27,91.73");
+  });
+
+  it("uses a native bbox filter, south/west/north/east, in bbox mode", () => {
+    const query = buildOverpassQuery({
+      area: { kind: "bbox", bbox: { south: 25.03, north: 26.12, west: 89.81, east: 92.8 } },
+      categories: ["museum"],
+    });
+    expect(query).toContain("(25.03,89.81,26.12,92.8)");
+    expect(query).not.toContain("around:");
   });
 });
 
@@ -310,9 +322,7 @@ describe("findPlaces — mocked fetch, temp cache dir, never live network", () =
   });
 
   const params = {
-    lat: 25.27,
-    lng: 91.73,
-    radiusKm: 10,
+    area: { kind: "radius" as const, lat: 25.27, lng: 91.73, radiusKm: 10 },
     categories: ["waterfall", "attraction"] as PlaceCategory[],
   };
 

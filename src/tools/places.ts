@@ -22,6 +22,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { PlaceCandidate, PlaceCategory } from "../schemas/index.js";
 import { LIMITS } from "../config.js";
+import type { GeoBoundingBox } from "./geocode.js";
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
@@ -45,10 +46,12 @@ export class PlacesLookupError extends Error {
   }
 }
 
+export type PlaceSearchArea =
+  | { kind: "radius"; lat: number; lng: number; radiusKm: number }
+  | { kind: "bbox"; bbox: GeoBoundingBox };
+
 export interface FindPlacesParams {
-  lat: number;
-  lng: number;
-  radiusKm: number;
+  area: PlaceSearchArea;
   categories: PlaceCategory[];
 }
 
@@ -118,8 +121,13 @@ export function buildOverpassQuery(params: FindPlacesParams): string {
     valuesByKey.set(rule.key, values);
   }
 
-  const radiusMeters = Math.round(params.radiusKm * 1000);
-  const around = `around:${radiusMeters},${params.lat},${params.lng}`;
+  // Overpass filter suffix: `(around:meters,lat,lng)` for a radius search, or the
+  // native `(south,west,north,east)` for a bbox. A whole region (a state, say) is
+  // not well represented by centre + radius — see geocode.ts.
+  const area =
+    params.area.kind === "radius"
+      ? `around:${Math.round(params.area.radiusKm * 1000)},${params.area.lat},${params.area.lng}`
+      : `${params.area.bbox.south},${params.area.bbox.west},${params.area.bbox.north},${params.area.bbox.east}`;
 
   const clauses: string[] = [];
   for (const [key, values] of valuesByKey) {
@@ -127,7 +135,7 @@ export function buildOverpassQuery(params: FindPlacesParams): string {
     const match =
       sortedValues.length === 1 ? `="${sortedValues[0]}"` : `~"^(${sortedValues.join("|")})$"`;
     for (const elementType of ["node", "way", "relation"] as const) {
-      clauses.push(`  ${elementType}["${key}"${match}](${around});`);
+      clauses.push(`  ${elementType}["${key}"${match}](${area});`);
     }
   }
 
@@ -350,10 +358,15 @@ export async function findPlaces(
   const response = await fetchOverpassCached(query, cacheDir);
   const { candidates, droppedUnnamed } = parseOverpassResponse(response, params.categories);
 
+  const areaDescription =
+    params.area.kind === "radius"
+      ? `${params.area.radiusKm}km around (${params.area.lat}, ${params.area.lng})`
+      : `bbox [${params.area.bbox.south},${params.area.bbox.west},${params.area.bbox.north},${params.area.bbox.east}]`;
+
   if (droppedUnnamed > 0) {
     console.error(
       `[places] dropped ${droppedUnnamed}/${response.elements.length} unnamed element(s) ` +
-        `for categories [${params.categories.join(", ")}] near (${params.lat}, ${params.lng}).`,
+        `for categories [${params.categories.join(", ")}] in ${areaDescription}.`,
     );
   }
 

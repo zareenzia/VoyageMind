@@ -115,6 +115,21 @@ export const ActivitySchema = z.object({
   closed_days: z.array(z.number().int().min(0).max(6)).default([]),
   booking_required: z.boolean().default(false),
   notes: z.string().nullable(),
+  osm_type: z
+    .enum(["node", "way", "relation"])
+    .describe(
+      "Must be copied from one of the PlaceCandidates you were given — the type of " +
+        "that exact candidate. Never a value you invented.",
+    ),
+  osm_id: z
+    .number()
+    .int()
+    .describe(
+      "Must be copied from one of the PlaceCandidates you were given — the id of " +
+        "that exact candidate. Every Activity must trace back to a real candidate; " +
+        "this is checked after you respond, and an id that doesn't match one you " +
+        "were given fails validation.",
+    ),
   estimated: EstimatedFlagsSchema,
 });
 export type Activity = z.infer<typeof ActivitySchema>;

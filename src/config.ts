@@ -20,4 +20,9 @@ export const LIMITS = {
   maxParallelResearch: 4,
   /** Retries for a tool call hitting a transient upstream failure (429/5xx). */
   maxToolRetries: 3,
+  /** Max PlaceCandidates handed to the Guide agent per destination, sorted by
+   * prominence and truncated from the bottom. A whole-region query can return
+   * dozens of named places (Sohra alone returned 88) — passing all of them with
+   * full tags is context the fast model doesn't need to do its job well. */
+  candidatesPerDestination: 40,
 } as const;
