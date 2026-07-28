@@ -22,10 +22,16 @@ RULES
 3. pace: infer from language. "see everything", "cram it in" -> packed.
    "chill", "beach and books" -> relaxed. Default to moderate when unclear.
 
-4. budget_includes_flights: true only if the user indicates the figure is all-in.
+4. Budget: record the number exactly as the user said it, in the currency they used.
+   budget_amount is the raw figure, budget_currency is the ISO 4217 code.
+   "3000 pounds" -> 3000 / GBP. "two grand" -> 2000 / USD only if dollars are implied
+   by context; otherwise flag the ambiguity. NEVER convert between currencies —
+   conversion happens in code with a live rate, not in your head.
+
+5. budget_includes_flights: true only if the user indicates the figure is all-in.
    Default false and flag it in open_questions if a budget was given but unclear.
 
-5. Flag genuine blockers in open_questions, not trivia. Missing origin airport,
+6. Flag genuine blockers in open_questions, not trivia. Missing origin airport,
    an impossible date range, or a budget that cannot cover the stated trip are
    blockers. Not knowing which museum they prefer is not.
 

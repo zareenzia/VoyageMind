@@ -4,3 +4,11 @@ node_modules/
 dist/
 .cache/
 evals/.snapshots/
+
+.idea/
+desktop.ini
+.cache/
+
+.idea/
+desktop.ini
+.cache/

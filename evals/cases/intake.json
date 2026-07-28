@@ -6,22 +6,26 @@
     "expect": {
       "destinations": [],
       "region_hint_not_null": true,
-      "budget_total_usd": 2000,
       "travellers.adults": 2,
       "travellers.count": 2,
-      "open_questions_min": 1
+      "open_questions_min": 2,
+      "budget_amount": 2000,
+      "budget_currency": null
     },
-    "why": "Baseline. Must not invent a destination. Must flag missing origin."
+    "why": "Baseline. Must not invent a destination. Must flag missing origin. '2 grand' names no currency — recording a guess is worse than recording null and asking."
   },
   {
     "id": "impossible-budget",
     "today": "2026-07-27",
     "request": "Two weeks in Switzerland in August, budget $400 total including flights from Dhaka",
     "expect": {
-      "destinations_include": ["Switzerland"],
-      "budget_total_usd": 400,
+      "destinations_include": [
+        "Switzerland"
+      ],
       "budget_includes_flights": true,
-      "open_questions_min": 1
+      "open_questions_min": 1,
+      "budget_amount": 400,
+      "budget_currency": "USD"
     },
     "why": "Intake must record the number faithfully and flag it, not silently 'fix' the budget."
   },
@@ -30,10 +34,12 @@
     "today": "2026-07-27",
     "request": "I have one free day in Istanbul this Saturday, what should I do",
     "expect": {
-      "destinations_include": ["Istanbul"],
+      "destinations_include": [
+        "Istanbul"
+      ],
       "nights": null,
       "start_date": "2026-08-01",
-      "budget_total_usd": null
+      "budget_amount": null
     },
     "why": "Relative date resolution. No nights. Must not invent a budget."
   },
@@ -42,12 +48,14 @@
     "today": "2026-07-27",
     "request": "6 of us, 2 with wheelchairs, Rome for 4 nights in October. Strictly halal food. No budget limit really but keep it sensible.",
     "expect": {
-      "destinations_include": ["Rome"],
+      "destinations_include": [
+        "Rome"
+      ],
       "travellers.count": 6,
       "nights": 4,
       "dietary_min": 1,
       "mobility_needs_min": 1,
-      "budget_total_usd": null
+      "budget_amount": null
     },
     "why": "Constraints must survive intake intact — they drive filtering downstream."
   },
@@ -56,11 +64,14 @@
     "today": "2026-07-27",
     "request": "5 days in Tokyo, I want to see absolutely everything, cram it in, don't care about sleep",
     "expect": {
-      "destinations_include": ["Tokyo"],
+      "destinations_include": [
+        "Tokyo"
+      ],
       "pace": "packed",
-      "nights": 5
+      "nights": 4,
+      "open_questions_min": 1
     },
-    "why": "Pace inference from language."
+    "why": "Pace inference from language. Also pins the days-vs-nights convention: '5 days' = 4 nights, and the assumption must be flagged."
   },
   {
     "id": "relaxed-pace-signal",
@@ -69,19 +80,30 @@
     "expect": {
       "pace": "relaxed",
       "nights": 7,
-      "region_hint_not_null": true
+      "destinations_include": [
+        "Thailand"
+      ],
+      "region_hint": null,
+      "open_questions_min": 1,
+      "interests_include": [
+        "beach"
+      ]
     },
-    "why": "Opposite pace signal, plus vague destination inside a named country."
+    "why": "Opposite pace signal. Also pins destinations vs region_hint: a named country is a destination, not a region hint, and the unresolved area within it must be flagged."
   },
   {
     "id": "multi-city",
     "today": "2026-07-27",
     "request": "Barcelona then Lisbon, 10 nights split however makes sense, flying from London, mid Sept, £3000",
     "expect": {
-      "destinations_include": ["Barcelona", "Lisbon"],
+      "destinations_include": [
+        "Barcelona",
+        "Lisbon"
+      ],
       "origin_not_null": true,
       "nights": 10,
-      "budget_total_usd_not_null": true
+      "budget_amount": 3000,
+      "budget_currency": "GBP"
     },
     "why": "Multiple destinations preserved in order. Non-USD budget must be handled, not dropped."
   },
@@ -90,7 +112,9 @@
     "today": "2026-07-27",
     "request": "Bangladeshi passport, thinking about Japan in spring, 8 nights, is that doable",
     "expect": {
-      "destinations_include": ["Japan"],
+      "destinations_include": [
+        "Japan"
+      ],
       "visa_constraints_min": 1,
       "nights": 8
     },
@@ -114,7 +138,9 @@
     "today": "2026-07-27",
     "request": "4 nights in Kyoto sometime in the next few months, whenever is cheapest",
     "expect": {
-      "destinations_include": ["Kyoto"],
+      "destinations_include": [
+        "Kyoto"
+      ],
       "nights": 4,
       "flexible_dates": true
     },

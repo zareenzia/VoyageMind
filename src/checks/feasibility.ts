@@ -1,4 +1,5 @@
 import type { DayPlan, Itinerary, TripBrief } from "../schemas/index.js";
+import { budgetInUsd } from "../tools/currency.js";
 
 /**
  * CLAUDE.md rule 2 lives here. No model touches this arithmetic.
@@ -45,14 +46,20 @@ export function computeTotalUsd(itinerary: Itinerary, brief: TripBrief): number 
 }
 
 export function checkBudget(itinerary: Itinerary, brief: TripBrief): CheckFailure[] {
-  if (brief.budget_total_usd === null) return [];
+  // Conversion happens in src/tools/currency.ts, not here and not in an agent.
+  const budgetUsd = budgetInUsd(brief.budget_amount, brief.budget_currency);
+  if (budgetUsd === null) return [];
   const total = computeTotalUsd(itinerary, brief);
-  if (total <= brief.budget_total_usd) return [];
+  if (total <= budgetUsd) return [];
+  const stated =
+    brief.budget_currency === "USD"
+      ? `$${brief.budget_amount}`
+      : `${brief.budget_amount} ${brief.budget_currency} (~$${budgetUsd})`;
   return [
     {
       code: "OVER_BUDGET",
-      message: `Total $${total} exceeds stated budget $${brief.budget_total_usd} by $${(
-        total - brief.budget_total_usd
+      message: `Total $${total} exceeds stated budget ${stated} by $${(
+        total - budgetUsd
       ).toFixed(2)}.`,
     },
   ];

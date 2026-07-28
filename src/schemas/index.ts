@@ -26,26 +26,62 @@ export const TripBriefSchema = z.object({
   origin: z.string().nullable(),
   destinations: z.array(z.string()).describe("Named places, or [] if user was vague"),
   region_hint: z
-    .string()
-    .nullable()
-    .describe("e.g. 'somewhere warm', 'Southeast Asia' — when no destination is named"),
+      .string()
+      .nullable()
+      .describe(
+          "Geographic hint ONLY when no place is named at all: 'somewhere warm', 'Southeast " +
+          "Asia', 'anywhere in Europe'. If ANY place is named — including a whole country — " +
+          "this is null and the place goes in destinations. A setting or landscape is NOT a " +
+          "region hint: 'a beach in Thailand' -> destinations ['Thailand'], region_hint null, " +
+          "interests ['beach'].",
+      ),
   start_date: isoDate.nullable(),
   end_date: isoDate.nullable(),
-  nights: z.number().int().min(1).nullable(),
+  nights: z
+      .number()
+      .int()
+      .min(1)
+      .nullable()
+      .describe(
+          "Number of nights. CONVENTION: 'N days' means N-1 nights (a '5 day trip' is 4 " +
+          "nights) — apply this exactly and add an open_question noting the assumption. " +
+          "'N nights' is literal. 'a week' is 7. A single day is null, not 0. Null if not " +
+          "determinable.",
+      ),
   flexible_dates: z.boolean(),
   travellers: TravellerSchema,
-  budget_total_usd: z.number().positive().nullable(),
+  budget_amount: z
+      .number()
+      .positive()
+      .nullable()
+      .describe("The number the user said, in the currency they said it in. Never converted."),
+  budget_currency: z
+      .string()
+      .length(3)
+      .nullable()
+      .describe(
+          "ISO 4217 code, e.g. USD, GBP, EUR, BDT. Null in TWO cases: no budget was given at " +
+          "all, OR an amount was given with no currency named (e.g. 'about 2 grand', " +
+          "'around 5k'). Never guess a currency from the destination or from context. " +
+          "Recording null and asking is correct; guessing is not.",
+      ),
   budget_includes_flights: z.boolean(),
   pace: PaceSchema,
-  interests: z.array(z.string()).describe("food, hiking, museums, nightlife, ..."),
+  interests: z
+      .array(z.string())
+      .describe(
+          "What the user wants from the trip: activities (hiking, museums, nightlife, food) " +
+          "AND desired settings or landscapes (beach, mountains, desert, city). If the user " +
+          "describes a kind of place rather than naming one, it belongs here.",
+      ),
   dietary: z.array(z.string()),
   mobility_needs: z.array(z.string()),
   visa_constraints: z.array(z.string()).describe("passport/nationality notes if mentioned"),
   must_include: z.array(z.string()),
   must_avoid: z.array(z.string()),
   open_questions: z
-    .array(z.string())
-    .describe("What Intake could not determine and a human should confirm"),
+      .array(z.string())
+      .describe("What Intake could not determine and a human should confirm"),
 });
 export type TripBrief = z.infer<typeof TripBriefSchema>;
 
@@ -101,9 +137,9 @@ export const ItinerarySchema = z.object({
   days: z.array(DayPlanSchema).min(1),
   flights_cost_usd: z.number().min(0),
   estimated_total_usd: z
-    .number()
-    .min(0)
-    .describe("Computed in src/checks/, never by a model. Present here for convenience only."),
+      .number()
+      .min(0)
+      .describe("Computed in src/checks/, never by a model. Present here for convenience only."),
 });
 export type Itinerary = z.infer<typeof ItinerarySchema>;
 
