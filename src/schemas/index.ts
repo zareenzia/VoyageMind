@@ -208,10 +208,37 @@ export const DestinationSchema = z.object({
   country: z.string(),
   centre: GeoPointSchema,
   why_it_fits: z.string().max(400),
-  best_months: z.array(z.number().int().min(1).max(12)),
+  // TODO: this is model judgement for now, per CLAUDE.md rule 6 that's a stopgap,
+  // not a destination — climate has real data (Open-Meteo's historical endpoint)
+  // and should eventually drive this instead of model recall. Recall gets the
+  // facts right and the recommendation backwards: a model asked when to visit
+  // Sohra, Meghalaya (one of the wettest places on Earth) may report its monsoon
+  // season accurately while still recommending it for a sightseeing trip.
+  best_months: z
+    .array(z.number().int().min(1).max(12))
+    .describe(
+      "Months good for VISITING and doing things outdoors, not just months the " +
+        "destination is 'in season' by some other measure. A place's wettest, " +
+        "stormiest, or most extreme months are usually bad recommendations even if " +
+        "locals or tourism boards talk about them positively.",
+    ),
   activities: z.array(ActivitySchema),
 });
 export type Destination = z.infer<typeof DestinationSchema>;
+
+/**
+ * What the Guide agent's model call actually produces. `name`, `country`, and
+ * `centre` are sourced facts (from the TripBrief and geocode.ts) known before the
+ * model is ever called — asking the model to reproduce them would be asking it to
+ * copy data it already has, for no benefit and a small risk it "helpfully"
+ * changes something. See CLAUDE.md rules 2 and 9.
+ */
+export const DestinationJudgmentSchema = DestinationSchema.omit({
+  name: true,
+  country: true,
+  centre: true,
+});
+export type DestinationJudgment = z.infer<typeof DestinationJudgmentSchema>;
 
 export const ScheduledStopSchema = z.object({
   activity: ActivitySchema,

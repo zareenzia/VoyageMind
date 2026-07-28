@@ -22,6 +22,14 @@ export interface RunOptions<T extends z.ZodTypeAny> {
   model: string;
   /** Default [] — most agents in this pipeline need no tools. */
   allowedTools?: string[];
+  /**
+   * Runs once schema validation has already passed. Return a message describing
+   * the problem to reject the output and retry — fed back to the model exactly
+   * like a schema failure, against the same maxSchemaRetries cap — or return null
+   * to accept. For business rules a Zod shape can't express, e.g. "every id in
+   * this array must reference something you were given."
+   */
+  validate?: (data: z.infer<T>) => string | null;
 }
 
 /**
@@ -64,7 +72,21 @@ export async function runAgent<T extends z.ZodTypeAny>(
     const json = extractJson(raw);
     const parsed = opts.schema.safeParse(json);
 
-    if (parsed.success) return parsed.data;
+    if (parsed.success) {
+      const problem = opts.validate?.(parsed.data) ?? null;
+      if (!problem) return parsed.data;
+
+      lastError = new AgentValidationError(
+        `[${opts.name}] output failed validation (attempt ${attempt + 1}): ${problem}`,
+        raw,
+        null,
+      );
+      prompt =
+        `${opts.prompt}\n\n` +
+        `Your previous response failed validation:\n\n${problem}\n\n` +
+        `Fix exactly this and return the corrected JSON object only.`;
+      continue;
+    }
 
     lastError = new AgentValidationError(
       `[${opts.name}] output failed schema validation (attempt ${attempt + 1}):\n` +
