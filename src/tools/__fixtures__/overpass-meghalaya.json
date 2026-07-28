@@ -1,0 +1,2208 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-07-28T09:29:40Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 245731299,
+      "lat": 25.2777336,
+      "lon": 91.7292416,
+      "tags": {
+        "alt_name": "Sohra;Cherrapunji;Cherrapunjee;Cherra",
+        "name": "Sohra (Cherrapunji)",
+        "name:bn": "চেরাপুঞ্জি",
+        "name:en": "Sohra (Cherrapunji)",
+        "name:hi": "चेरापूंजी (सोहरा)",
+        "name:kn": "ಚೇರಾಪುಂಜಿ",
+        "name:zh": "乞拉朋齐",
+        "place": "town",
+        "postal_code": "793108",
+        "tourism": "attraction",
+        "wikidata": "Q211030",
+        "wikipedia": "en:Cherrapunji"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1262013973,
+      "lat": 25.2988198,
+      "lon": 91.5824514,
+      "tags": {
+        "name": "Mawsynram",
+        "name:hi": "मावसिनराम",
+        "place": "town",
+        "tourism": "attraction",
+        "wikidata": "Q2708616",
+        "wikipedia": "en:Mawsynram"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3178190093,
+      "lat": 25.3033534,
+      "lon": 91.7270047,
+      "tags": {
+        "name": "Arwah Cave",
+        "natural": "cave_entrance",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3178190161,
+      "lat": 25.2019507,
+      "lon": 91.9155148,
+      "tags": {
+        "name": "Mawlynnong",
+        "note": "Asia's Cleanest Village Award",
+        "place": "hamlet",
+        "tourism": "attraction",
+        "wikidata": "Q6794437",
+        "wikipedia": "en:Mawlynnong"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3178190297,
+      "lat": 25.2885616,
+      "lon": 91.7042077,
+      "tags": {
+        "leisure": "resort",
+        "name": "Sa-I-Mika Park Resort",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3178190298,
+      "lat": 25.2447743,
+      "lon": 91.7247784,
+      "tags": {
+        "name": "Mawsmai Caves",
+        "natural": "cave_entrance",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3700997996,
+      "lat": 25.4215997,
+      "lon": 91.7915274,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3700999867,
+      "lat": 25.3113607,
+      "lon": 91.732834,
+      "tags": {
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3701048117,
+      "lat": 25.2160933,
+      "lon": 91.6843098,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3701076600,
+      "lat": 25.2132572,
+      "lon": 91.7322988,
+      "tags": {
+        "name": "Viewpoint over Bangladesh",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3701090527,
+      "lat": 25.2452376,
+      "lon": 91.7240548,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3701090528,
+      "lat": 25.2463073,
+      "lon": 91.7234995,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3701090534,
+      "lat": 25.245884,
+      "lon": 91.7238051,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3933644720,
+      "lat": 25.2756548,
+      "lon": 91.6865847,
+      "tags": {
+        "name": "Nohkalikai Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall",
+        "wikidata": "Q3631209",
+        "wikipedia": "en:Nohkalikai Falls"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3933647857,
+      "lat": 25.2397032,
+      "lon": 91.6646087,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3933648438,
+      "lat": 25.2677171,
+      "lon": 91.6774449,
+      "tags": {
+        "name": "Rainbow Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4571345967,
+      "lat": 25.3112017,
+      "lon": 91.7308075,
+      "tags": {
+        "amenity": "shelter",
+        "shelter_type": "picnic_shelter",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4571353732,
+      "lat": 25.243415,
+      "lon": 91.7313765,
+      "tags": {
+        "historic": "archaeological_site",
+        "name": "Mawsmai stones",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4571362940,
+      "lat": 25.4207815,
+      "lon": 91.7920376,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905125027,
+      "lat": 25.2543383,
+      "lon": 91.6560497,
+      "tags": {
+        "name": "Jingmaham cave",
+        "name:en": "Jingmaham cave",
+        "natural": "cave_entrance",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905125028,
+      "lat": 25.2989007,
+      "lon": 91.6992614,
+      "tags": {
+        "name": "Umtynghiang Falls",
+        "name:en": "Umtynghiang Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905266653,
+      "lat": 25.2178255,
+      "lon": 91.7219701,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905270243,
+      "lat": 25.2171797,
+      "lon": 91.7221103,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905465855,
+      "lat": 25.2710581,
+      "lon": 91.6896468,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905465858,
+      "lat": 25.2717094,
+      "lon": 91.6900539,
+      "tags": {
+        "name": "Nohkalikai Falls View Point",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4905897538,
+      "lat": 25.2077957,
+      "lon": 91.8905289,
+      "tags": {
+        "fee": "yes",
+        "name": "Nohwet View Point",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4909857537,
+      "lat": 25.3086934,
+      "lon": 91.6108866,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5234210321,
+      "lat": 25.2541863,
+      "lon": 91.7004148,
+      "tags": {
+        "name": "Viewpoint over the valley",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5234210621,
+      "lat": 25.2539276,
+      "lon": 91.7031357,
+      "tags": {
+        "historic": "monument",
+        "name": "Monolith park"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5316578721,
+      "lat": 25.2650651,
+      "lon": 91.6842467,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352561190,
+      "lat": 25.2130828,
+      "lon": 91.676736,
+      "tags": {
+        "name": "Living Root Bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352612521,
+      "lat": 25.225849,
+      "lon": 91.6751012,
+      "tags": {
+        "name": "Jingkieng Nongriat Living Root Bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802188,
+      "lat": 25.2430438,
+      "lon": 91.7386669,
+      "tags": {
+        "height": "315",
+        "name": "Nohsngithiang Falls (Seven Sisters)",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802349,
+      "lat": 25.2784982,
+      "lon": 91.6757154,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802351,
+      "lat": 25.2796672,
+      "lon": 91.6755143,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802384,
+      "lat": 25.2933296,
+      "lon": 91.6836709,
+      "tags": {
+        "name": "Daiñthlen Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802396,
+      "lat": 25.291632,
+      "lon": 91.6782126,
+      "tags": {
+        "name": "Wei Sawdong",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352802731,
+      "lat": 25.268652,
+      "lon": 91.6892418,
+      "tags": {
+        "archaeological_site": "megalith",
+        "historic": "archaeological_site",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352803211,
+      "lat": 25.2275378,
+      "lon": 91.7166755,
+      "tags": {
+        "name": "Kynrem Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352803443,
+      "lat": 25.2507263,
+      "lon": 91.6738949,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352807510,
+      "lat": 25.2782435,
+      "lon": 91.7315859,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5352807778,
+      "lat": 25.242988,
+      "lon": 91.7415637,
+      "tags": {
+        "height": "315",
+        "name": "Nohsngithiang Falls (Seven Sisters)",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353042028,
+      "lat": 25.3285268,
+      "lon": 91.7192946,
+      "tags": {
+        "name": "Lyngnga",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353042053,
+      "lat": 25.3218657,
+      "lon": 91.709927,
+      "tags": {
+        "name": "Kshaid Diengdoh",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353042061,
+      "lat": 25.3177391,
+      "lon": 91.706998,
+      "tags": {
+        "name": "Lyngksiar",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353042073,
+      "lat": 25.313901,
+      "lon": 91.7015907,
+      "tags": {
+        "name": "Janailar",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353042095,
+      "lat": 25.3059866,
+      "lon": 91.6942294,
+      "tags": {
+        "name": "Mawsawa",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534030,
+      "lat": 25.2620555,
+      "lon": 91.6987985,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534038,
+      "lat": 25.2563671,
+      "lon": 91.6918784,
+      "tags": {
+        "name": "Trap Falls",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534085,
+      "lat": 25.2511127,
+      "lon": 91.6581309,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534090,
+      "lat": 25.2523038,
+      "lon": 91.6580021,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534120,
+      "lat": 25.237864,
+      "lon": 91.66132,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534121,
+      "lat": 25.2380047,
+      "lon": 91.6623151,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5353534122,
+      "lat": 25.2382401,
+      "lon": 91.6629025,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355167148,
+      "lat": 25.3315536,
+      "lon": 91.7286515,
+      "tags": {
+        "name": "Kshaid-U-Rai",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355167409,
+      "lat": 25.2127424,
+      "lon": 91.7325977,
+      "tags": {
+        "name": "Khoh Ramhah",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355167462,
+      "lat": 25.2385508,
+      "lon": 91.7328035,
+      "tags": {
+        "direction": "NE",
+        "name": "Seven Sisters Waterfalls Viewpoint",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355167497,
+      "lat": 25.2474361,
+      "lon": 91.7559202,
+      "tags": {
+        "direction": "180, S",
+        "name": "Bangladesh Plains Viewpoint",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355192300,
+      "lat": 25.3914046,
+      "lon": 91.7422627,
+      "tags": {
+        "name": "Rock Bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355192302,
+      "lat": 25.3899762,
+      "lon": 91.742483,
+      "tags": {
+        "name": "Devil's Rock",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5355192425,
+      "lat": 25.3792561,
+      "lon": 91.7536598,
+      "tags": {
+        "direction": "157, SSE",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5359722540,
+      "lat": 25.21314,
+      "lon": 91.7324099,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5359722852,
+      "lat": 25.2196863,
+      "lon": 91.6374484,
+      "tags": {
+        "name": "Mawrong, Mot I Lop",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5359722902,
+      "lat": 25.2048307,
+      "lon": 91.6428396,
+      "tags": {
+        "name": "Living root bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423402,
+      "lat": 25.2063826,
+      "lon": 91.90925,
+      "tags": {
+        "fee": "yes",
+        "name": "Balancing Rock of Mawlynnong",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423578,
+      "lat": 25.2037095,
+      "lon": 91.8912792,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423986,
+      "lat": 25.1989055,
+      "lon": 91.8175158,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423989,
+      "lat": 25.1996214,
+      "lon": 91.8171215,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423993,
+      "lat": 25.1991506,
+      "lon": 91.8190473,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5371423994,
+      "lat": 25.2000194,
+      "lon": 91.819278,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122590,
+      "lat": 25.3117697,
+      "lon": 91.6021103,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122600,
+      "lat": 25.3106688,
+      "lon": 91.6060692,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122606,
+      "lat": 25.3104118,
+      "lon": 91.6080058,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122609,
+      "lat": 25.3099548,
+      "lon": 91.608793,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122613,
+      "lat": 25.3096698,
+      "lon": 91.6095856,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122638,
+      "lat": 25.3155364,
+      "lon": 91.6189881,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122640,
+      "lat": 25.3157388,
+      "lon": 91.6187681,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122642,
+      "lat": 25.3159376,
+      "lon": 91.6185978,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122644,
+      "lat": 25.3161062,
+      "lon": 91.6184369,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122650,
+      "lat": 25.3164771,
+      "lon": 91.6174163,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122652,
+      "lat": 25.3168457,
+      "lon": 91.6170515,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411122655,
+      "lat": 25.3170481,
+      "lon": 91.6163662,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411135453,
+      "lat": 25.4482809,
+      "lon": 91.7483228,
+      "tags": {
+        "name": "Khasi Heritage Village",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5411135491,
+      "lat": 25.4453055,
+      "lon": 91.7410004,
+      "tags": {
+        "direction": "270, W",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5460476442,
+      "lat": 25.181955,
+      "lon": 91.8994962,
+      "tags": {
+        "name": "কূলনছড়া ঝর্না",
+        "name:en": "Qulonchora Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465423409,
+      "lat": 25.1895188,
+      "lon": 91.9080913,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465498699,
+      "lat": 25.2843201,
+      "lon": 91.5855409,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465498701,
+      "lat": 25.2849836,
+      "lon": 91.5861192,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465498773,
+      "lat": 25.3197903,
+      "lon": 91.5926769,
+      "tags": {
+        "name": "Urktung Falls",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465498828,
+      "lat": 25.3067783,
+      "lon": 91.5920104,
+      "tags": {
+        "name": "Krem Dam",
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465499123,
+      "lat": 25.2462607,
+      "lon": 91.7235709,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465547132,
+      "lat": 25.3067771,
+      "lon": 91.5766668,
+      "tags": {
+        "name": "Mawtongjnam Ne Thong",
+        "natural": "rock",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465547172,
+      "lat": 25.2955109,
+      "lon": 91.5696032,
+      "tags": {
+        "name": "Khreng Khreng Falls",
+        "tourism": "attraction",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5465547299,
+      "lat": 25.3045075,
+      "lon": 91.585097,
+      "tags": {
+        "name": "Mawjymbuin Cave",
+        "natural": "cave_entrance",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5525833923,
+      "lat": 25.2408516,
+      "lon": 91.6612608,
+      "tags": {
+        "name": "Root bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5533409077,
+      "lat": 25.294086,
+      "lon": 91.682793,
+      "tags": {
+        "name": "Dainthlen falls",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6160571585,
+      "lat": 25.4469039,
+      "lon": 91.7626596,
+      "tags": {
+        "name": "Mawphlang Dam Viewpoint",
+        "name:en": "Mawkhan Viewpoint",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6196883990,
+      "lat": 25.3451258,
+      "lon": 91.8910387,
+      "tags": {
+        "name": "Viewpoint",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6203901249,
+      "lat": 25.291301,
+      "lon": 91.6779363,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6203901417,
+      "lat": 25.2730264,
+      "lon": 91.7340776,
+      "tags": {
+        "artwork_type": "statue",
+        "tourism": "artwork"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6255778044,
+      "lat": 25.4124427,
+      "lon": 91.8320346,
+      "tags": {
+        "ele": "1892",
+        "natural": "peak"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6371161912,
+      "lat": 25.2442573,
+      "lon": 91.7018875,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6859342885,
+      "lat": 25.2491934,
+      "lon": 91.6681543,
+      "tags": {
+        "name": "split rd",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6862188456,
+      "lat": 25.2750297,
+      "lon": 91.7306223,
+      "tags": {
+        "tourism": "artwork"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7007748185,
+      "lat": 25.2065435,
+      "lon": 91.8977875,
+      "tags": {
+        "name": "Living root bridge",
+        "name:ru": "Живой мост",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7013525585,
+      "lat": 25.2695153,
+      "lon": 91.7401051,
+      "tags": {
+        "name": "Beautiful viewpoint over the valley!",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7016665885,
+      "lat": 25.2608617,
+      "lon": 91.6777519,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7016714085,
+      "lat": 25.2591297,
+      "lon": 91.6759395,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7187909685,
+      "lat": 25.2372595,
+      "lon": 91.7328254,
+      "tags": {
+        "name": "Seven Sister's falls best viewpoint",
+        "name:ru": "Лучший вид на водопад 'Семь сестёр' ( Слунтер )",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7190020885,
+      "lat": 25.2244319,
+      "lon": 91.7283976,
+      "tags": {
+        "name": "Viewpoint to Bangladesh",
+        "name:ru": "Обзорная площадка на Бангладеш ( Слунтер )",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7236153487,
+      "lat": 25.2467693,
+      "lon": 91.6546435,
+      "tags": {
+        "name": "Cricket Pitch",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8767947459,
+      "lat": 25.294996,
+      "lon": 91.5796149,
+      "tags": {
+        "access": "yes",
+        "historic": "monument",
+        "name": "Kor Shongthait"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8767947460,
+      "lat": 25.294913,
+      "lon": 91.5795839,
+      "tags": {
+        "access": "permissive",
+        "historic": "monument",
+        "name": "Mawbynna (Khasi Megaliths)"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8794163674,
+      "lat": 25.3202036,
+      "lon": 91.5976222,
+      "tags": {
+        "name": "Umsawrang Falls",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8918711388,
+      "lat": 25.28603,
+      "lon": 91.5759303,
+      "tags": {
+        "name": "Rit Mawksir Viewpoint",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9176696073,
+      "lat": 25.2220148,
+      "lon": 91.5681969,
+      "tags": {
+        "name": "Umseiniong Falls",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9186674625,
+      "lat": 25.3704517,
+      "lon": 91.5876622,
+      "tags": {
+        "name": "Symper Peak",
+        "natural": "peak"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9370280404,
+      "lat": 25.3117832,
+      "lon": 91.5938573,
+      "tags": {
+        "name": "Krem Dam Waterfall",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9461305962,
+      "lat": 25.282659,
+      "lon": 91.5864058,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9461305963,
+      "lat": 25.282023,
+      "lon": 91.587049,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9461305964,
+      "lat": 25.2789241,
+      "lon": 91.586634,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9461305965,
+      "lat": 25.2781856,
+      "lon": 91.5867872,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10312813647,
+      "lat": 25.29644,
+      "lon": 91.5758173,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10570250785,
+      "lat": 25.3173151,
+      "lon": 91.8212671,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10709988004,
+      "lat": 25.2369028,
+      "lon": 91.7887497,
+      "tags": {
+        "alt_name": "Wah Lyngngam (The Green River)",
+        "name": "Wah Lyngngam (The Green River)",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10969773274,
+      "lat": 25.3356813,
+      "lon": 91.5908209,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10969783783,
+      "lat": 25.3360869,
+      "lon": 91.5920802,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10969789024,
+      "lat": 25.3357263,
+      "lon": 91.5938861,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10969791357,
+      "lat": 25.3421309,
+      "lon": 91.5954457,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10969803294,
+      "lat": 25.3368968,
+      "lon": 91.588369,
+      "tags": {
+        "historic": "monument",
+        "name": "Maw-Sngi"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10970378028,
+      "lat": 25.2836547,
+      "lon": 91.5856,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10995362660,
+      "lat": 25.248432,
+      "lon": 91.5728585,
+      "tags": {
+        "name": "Weikynmei",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10995548987,
+      "lat": 25.2513547,
+      "lon": 91.5739482,
+      "tags": {
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11583935770,
+      "lat": 25.3336603,
+      "lon": 91.8276742,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11607366069,
+      "lat": 25.2451045,
+      "lon": 91.6604363,
+      "tags": {
+        "name": "metal suspension bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11752679460,
+      "lat": 25.3129735,
+      "lon": 91.760598,
+      "tags": {
+        "name": "Kshaid Sum Syiem",
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11752759012,
+      "lat": 25.3126403,
+      "lon": 91.7604727,
+      "tags": {
+        "name": "Palong Syiem",
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11752769677,
+      "lat": 25.3226012,
+      "lon": 91.7458011,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11752771581,
+      "lat": 25.3123398,
+      "lon": 91.7605361,
+      "tags": {
+        "name": "Stieh Maw",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11752777408,
+      "lat": 25.3123905,
+      "lon": 91.7605715,
+      "tags": {
+        "name": "Ka Krem Ba Dang Thymmai",
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11758294371,
+      "lat": 25.3889389,
+      "lon": 91.8710005,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11768736052,
+      "lat": 25.3111247,
+      "lon": 91.7608937,
+      "tags": {
+        "name": "Kshaid Arsdad",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11768755690,
+      "lat": 25.3114338,
+      "lon": 91.7595767,
+      "tags": {
+        "name": "Kshaid Um Lwai",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11768755745,
+      "lat": 25.311917,
+      "lon": 91.7598006,
+      "tags": {
+        "name": "Kshaid Thied Dieng",
+        "name:en": "Root Waterfall",
+        "waterway": "waterfall"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11768755765,
+      "lat": 25.31204,
+      "lon": 91.7603774,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12462564679,
+      "lat": 25.3536554,
+      "lon": 91.8395222,
+      "tags": {
+        "name": "Big Rock",
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12545943501,
+      "lat": 25.2557525,
+      "lon": 91.6612408,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12864745517,
+      "lat": 25.4209967,
+      "lon": 91.7916421,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12864745526,
+      "lat": 25.3019165,
+      "lon": 91.7269834,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12864745545,
+      "lat": 25.2671116,
+      "lon": 91.6883261,
+      "tags": {
+        "tourism": "viewpoint"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12864745558,
+      "lat": 25.2453396,
+      "lon": 91.7241606,
+      "tags": {
+        "natural": "cave_entrance"
+      }
+    },
+    {
+      "type": "way",
+      "id": 366115739,
+      "center": {
+        "lat": 25.2535496,
+        "lon": 91.6876056
+      },
+      "nodes": [
+        3701026050,
+        3701026051
+      ],
+      "tags": {
+        "bridge": "yes",
+        "highway": "path",
+        "layer": "1",
+        "name": "Root bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "way",
+      "id": 366116299,
+      "center": {
+        "lat": 25.2489294,
+        "lon": 91.6799472
+      },
+      "nodes": [
+        3701030279,
+        3701030280
+      ],
+      "tags": {
+        "bridge": "yes",
+        "highway": "path",
+        "layer": "1",
+        "name:en": "Long root bridge",
+        "opening_hours": "Mo-Su 07:00-17:00",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "way",
+      "id": 390202521,
+      "center": {
+        "lat": 25.2576269,
+        "lon": 91.6753688
+      },
+      "nodes": [
+        3933648267,
+        3933648269
+      ],
+      "tags": {
+        "access": "no",
+        "bridge": "yes",
+        "bridge:structure": "suspension",
+        "highway": "path",
+        "layer": "1",
+        "name": "Root bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "way",
+      "id": 430751240,
+      "center": {
+        "lat": 25.2172003,
+        "lon": 91.7228499
+      },
+      "nodes": [
+        4300183215,
+        4905268839,
+        4300183224,
+        4905268838,
+        4905268837,
+        4300183218,
+        4300183212,
+        4905268836,
+        4300183194,
+        4300183196,
+        4300183190,
+        4905268843,
+        4905268842,
+        4905268841,
+        4905268840,
+        4300183189,
+        4300183202,
+        4300183215
+      ],
+      "tags": {
+        "leisure": "park",
+        "name": "Thangkharang Park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 470677400,
+      "center": {
+        "lat": 25.2876255,
+        "lon": 91.715959
+      },
+      "nodes": [
+        4648548722,
+        4648548723,
+        4648548724,
+        4648548725,
+        9662811309,
+        4648548726,
+        4648548727,
+        4648548728,
+        4648548722
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 470798462,
+      "center": {
+        "lat": 25.2873929,
+        "lon": 91.7150138
+      },
+      "nodes": [
+        4649893968,
+        4649893969,
+        4649893970,
+        4649893971,
+        4649893972,
+        4649893973,
+        4649893974,
+        4649893975,
+        4649893976,
+        4649893977,
+        4649893978,
+        4649905164,
+        9662841331,
+        4649893979,
+        4649893980,
+        4649893981,
+        4649905147,
+        4649893968
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 470804174,
+      "center": {
+        "lat": 25.2840842,
+        "lon": 91.7134373
+      },
+      "nodes": [
+        4649952601,
+        4649952603,
+        4649952604,
+        9662811297,
+        9662811298,
+        9662811299,
+        9662811300,
+        9662811301,
+        4905465871,
+        4649952601
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 554672508,
+      "center": {
+        "lat": 25.2915126,
+        "lon": 91.6781804
+      },
+      "nodes": [
+        5352802396,
+        5352802395,
+        5352802394,
+        5352802393,
+        5352802392,
+        5352802391,
+        5352802390,
+        5352802389,
+        5352802388,
+        5352802387,
+        5352802396
+      ],
+      "tags": {
+        "intermittent": "yes",
+        "name": "Wei Sawdong",
+        "natural": "water",
+        "seasonal": "wet_season",
+        "tourism": "attraction",
+        "water": "lagoon"
+      }
+    },
+    {
+      "type": "way",
+      "id": 554672517,
+      "center": {
+        "lat": 25.2542032,
+        "lon": 91.703007
+      },
+      "nodes": [
+        5352802730,
+        5352802729,
+        5352802728,
+        5352802727,
+        5352802726,
+        5352802725,
+        5352802724,
+        5352802723,
+        5352802722,
+        5352802721,
+        5352802720,
+        5352802719,
+        5352802718,
+        5352802730
+      ],
+      "tags": {
+        "leisure": "park",
+        "name": "Monolith Park Mawmluh"
+      }
+    },
+    {
+      "type": "way",
+      "id": 554672537,
+      "center": {
+        "lat": 25.250652,
+        "lon": 91.673789
+      },
+      "nodes": [
+        5352803446,
+        5352803445,
+        5352803444,
+        5352803443,
+        5352803442,
+        5352803441,
+        5352803440,
+        5352803439,
+        5352803438,
+        5352803437,
+        5352803436,
+        5352803430,
+        5352803435,
+        5352803433,
+        5352803434,
+        5352803446
+      ],
+      "tags": {
+        "intermittent": "yes",
+        "leisure": "bathing_place",
+        "name": "Blue Lagoon",
+        "natural": "water",
+        "seasonal": "wet_season",
+        "sport": "swimming",
+        "tourism": "attraction",
+        "water": "lagoon"
+      }
+    },
+    {
+      "type": "way",
+      "id": 554749520,
+      "center": {
+        "lat": 25.2514562,
+        "lon": 91.6716581
+      },
+      "nodes": [
+        3933648227,
+        3933648218
+      ],
+      "tags": {
+        "bridge": "yes",
+        "bridge:structure": "living roots",
+        "highway": "path",
+        "layer": "1",
+        "name": "Double decker root bridge",
+        "tourism": "attraction"
+      }
+    },
+    {
+      "type": "way",
+      "id": 554955919,
+      "center": {
+        "lat": 25.2469812,
+        "lon": 91.7420357
+      },
+      "nodes": [
+        5355167511,
+        5355167510,
+        5355167509,
+        5355167508,
+        5359722467,
+        5359722468,
+        5359722469,
+        5355167507,
+        5355167506,
+        5355167505,
+        5355167504,
+        5355167503,
+        5355167511
+      ],
+      "tags": {
+        "fixme": "Is this really a park? Looks more like a hotel property or something.",
+        "leisure": "park",
+        "name": "Eco Park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 555536212,
+      "center": {
+        "lat": 25.2867029,
+        "lon": 91.7055792
+      },
+      "nodes": [
+        5359722422,
+        5359722421,
+        5359679620,
+        5359679619,
+        5359679618,
+        5359679617,
+        5359679616,
+        5359679615,
+        5359679614,
+        5359679613,
+        5359679612,
+        5359679611,
+        5359679610,
+        5359679609,
+        5359679608,
+        5359679607,
+        5359679606,
+        5359722422
+      ],
+      "tags": {
+        "leisure": "park",
+        "name": "Sa-I-Mika Park Resort"
+      }
+    },
+    {
+      "type": "way",
+      "id": 556878336,
+      "center": {
+        "lat": 25.2065526,
+        "lon": 91.8977996
+      },
+      "nodes": [
+        5371423515,
+        4571388114
+      ],
+      "tags": {
+        "bridge": "yes",
+        "ford": "yes",
+        "highway": "residential",
+        "name:en": "Zingmaham Living Root Bridge",
+        "tourism": "attraction",
+        "vehicle": "no"
+      }
+    },
+    {
+      "type": "way",
+      "id": 935357235,
+      "center": {
+        "lat": 25.2860033,
+        "lon": 91.5756315
+      },
+      "nodes": [
+        8668015415,
+        8668015416,
+        8668019217,
+        8668019218,
+        8668019219,
+        8668019220,
+        8668019221,
+        8668019222,
+        8668019223,
+        8668019224,
+        8668019225,
+        8668019226,
+        8668019227,
+        8668019228,
+        8668019229,
+        8668019230,
+        8668019231,
+        8668019232,
+        8668015415
+      ],
+      "tags": {
+        "addr:city": "Mawsynram",
+        "addr:postcode": "793113",
+        "addr:street": "Wahmawlyngdiar",
+        "leisure": "park",
+        "name": "Rit Mawksir Children's Park",
+        "opening_hours": "sunrise-sunset"
+      }
+    },
+    {
+      "type": "way",
+      "id": 938474471,
+      "center": {
+        "lat": 25.338924,
+        "lon": 91.5887805
+      },
+      "nodes": [
+        8694237288,
+        8694237289,
+        8694237290,
+        8694237291,
+        8694237292,
+        8694237293,
+        8694237294,
+        8694237295,
+        8694237296,
+        8694237297,
+        8694237298,
+        8694237299,
+        8694237300,
+        8694237301,
+        8694237302,
+        8694237303,
+        8694237304,
+        8694237305,
+        8694237306,
+        8694237307,
+        8694237308,
+        8694237309,
+        8694237310,
+        8694237311,
+        8694237312,
+        8694237313,
+        8694237314,
+        8694237315,
+        8694237316,
+        8694251917,
+        8694237288
+      ],
+      "tags": {
+        "historic": "ruins",
+        "name": "Twah Longwar"
+      }
+    },
+    {
+      "type": "way",
+      "id": 949719656,
+      "center": {
+        "lat": 25.2989675,
+        "lon": 91.5704542
+      },
+      "nodes": [
+        8792109318,
+        8792109319,
+        8792109320,
+        8792109321,
+        8792109322,
+        8792109323,
+        8792109324,
+        8792109325,
+        8792109326,
+        8792109327,
+        8792109328,
+        8792109329,
+        8792109330,
+        8792109318
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 952357335,
+      "center": {
+        "lat": 25.3088194,
+        "lon": 91.5912828
+      },
+      "nodes": [
+        8814731410,
+        8814731411,
+        8814731412,
+        9426177896,
+        8814731413,
+        8814731414,
+        8814731415,
+        8814731416,
+        8814794017,
+        8814794018,
+        8814794019,
+        8814794020,
+        8814794021,
+        8814794022,
+        8814794023,
+        8814794024,
+        8814794025,
+        8814794026,
+        8814794027,
+        8814794028,
+        8814794029,
+        8814794030,
+        8814794031,
+        8814794032,
+        8814794033,
+        8814794034,
+        8814794035,
+        8814794036,
+        9426177884,
+        8814794037,
+        8814794038,
+        8814794039,
+        8814794040,
+        8814794041,
+        8814794042,
+        8814794043,
+        8814794044,
+        8814794045,
+        9426177878,
+        8814794046,
+        8814794047,
+        8814794048,
+        8814794049,
+        8814794050,
+        8814794051,
+        8814794052,
+        8814794053,
+        8814794054,
+        8814794055,
+        8814794056,
+        8814794057,
+        8814794058,
+        8814794059,
+        8814794060,
+        8814794061,
+        8814794062,
+        8814794063,
+        8814794064,
+        8814794065,
+        8814794066,
+        8814794067,
+        8814794068,
+        8814794069,
+        8814794070,
+        8814794071,
+        8814794072,
+        8814794073,
+        8814794074,
+        8814794075,
+        8814794076,
+        8814794077,
+        8814794078,
+        8814794079,
+        8814731410
+      ],
+      "tags": {
+        "leisure": "park",
+        "name": "Krem Dam park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 952419600,
+      "center": {
+        "lat": 25.2669911,
+        "lon": 91.5884458
+      },
+      "nodes": [
+        8815244114,
+        8815244115,
+        8815244116,
+        8815284717,
+        8815284718,
+        8815284719,
+        8815284720,
+        8815284721,
+        8815284722,
+        8815284723,
+        8815284724,
+        8815284725,
+        8815284726,
+        8815284727,
+        8815284728,
+        8815284729,
+        8815284730,
+        8815284731,
+        8815284732,
+        8815284733,
+        8815284734,
+        8815284735,
+        8815284736,
+        8815284737,
+        8815284738,
+        8815284739,
+        8815284740,
+        8815284741,
+        8815284742,
+        8815284743,
+        8815284744,
+        8815284745,
+        8815284746,
+        8815284747,
+        8815284748,
+        8815284749,
+        8815284750,
+        8815284751,
+        8815284752,
+        8815284753,
+        8815284754,
+        8815284755,
+        8815284756,
+        8815284757,
+        8815284758,
+        8815284759,
+        8815284760,
+        8815284761,
+        8815284762,
+        8815284763,
+        8815284764,
+        8815284765,
+        8815284766,
+        8815284767,
+        8815284768,
+        8815284769,
+        8815284770,
+        8815284771,
+        8815284772,
+        8815284773,
+        8815284774,
+        8815284775,
+        8815284776,
+        8815284777,
+        8815284778,
+        8815244114
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1000784236,
+      "center": {
+        "lat": 25.3147423,
+        "lon": 91.7029697
+      },
+      "nodes": [
+        9237811509,
+        9237811503,
+        9237811502,
+        9237811501,
+        9237811500,
+        9237811512,
+        9237811511,
+        9237811510,
+        9237811509
+      ],
+      "tags": {
+        "natural": "beach"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1081748541,
+      "center": {
+        "lat": 25.122495,
+        "lon": 91.7755973
+      },
+      "nodes": [
+        9914475469,
+        9914475470,
+        9914475471,
+        9914475472,
+        9914475469
+      ],
+      "tags": {
+        "leisure": "park"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1267007976,
+      "center": {
+        "lat": 25.2507317,
+        "lon": 91.6721821
+      },
+      "nodes": [
+        3933648202,
+        5352803429
+      ],
+      "tags": {
+        "bridge": "yes",
+        "highway": "path",
+        "layer": "1",
+        "surface": "living_wood",
+        "tourism": "attraction"
+      }
+    }
+  ]
+}

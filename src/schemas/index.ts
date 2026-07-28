@@ -90,6 +90,18 @@ export const GeoPointSchema = z.object({
   lng: z.number().min(-180).max(180),
 });
 
+/**
+ * Which fields on an Activity are model-estimated rather than sourced fact.
+ * `true` means "a model guessed this" — the Critic weights it accordingly and the
+ * UI must label it. See CLAUDE.md rule 9.
+ */
+export const EstimatedFlagsSchema = z.object({
+  duration: z.boolean(),
+  cost: z.boolean(),
+  hours: z.boolean(),
+});
+export type EstimatedFlags = z.infer<typeof EstimatedFlagsSchema>;
+
 export const ActivitySchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -103,8 +115,78 @@ export const ActivitySchema = z.object({
   closed_days: z.array(z.number().int().min(0).max(6)).default([]),
   booking_required: z.boolean().default(false),
   notes: z.string().nullable(),
+  estimated: EstimatedFlagsSchema,
 });
 export type Activity = z.infer<typeof ActivitySchema>;
+
+/**
+ * A tourist point of interest, normalized from OpenStreetMap tags. Category values
+ * we currently query for — see src/tools/places.ts for the OSM tag mapping and the
+ * precedence order used when an element matches more than one.
+ */
+export const PlaceCategorySchema = z.enum([
+  "attraction",
+  "museum",
+  "gallery",
+  "viewpoint",
+  "artwork",
+  "zoo",
+  "theme_park",
+  "aquarium",
+  "picnic_site",
+  "historic_site",
+  "monument",
+  "waterfall",
+  "cave",
+  "peak",
+  "beach",
+  "park",
+  "garden",
+  "nature_reserve",
+]);
+export type PlaceCategory = z.infer<typeof PlaceCategorySchema>;
+
+/**
+ * A fact as OpenStreetMap recorded it — never a model estimate. No duration, no
+ * cost: those only exist once an Activity is built from this candidate, and even
+ * then only under the `estimated` flags on ActivitySchema. See CLAUDE.md rule 9.
+ */
+export const PlaceCandidateSchema = z.object({
+  source: z.enum(["osm"]).describe("Where this fact came from. Always 'osm' today."),
+  osm_type: z.enum(["node", "way", "relation"]),
+  osm_id: z.number().int(),
+  name: z.string(),
+  category: PlaceCategorySchema,
+  location: GeoPointSchema,
+  address: z
+    .string()
+    .nullable()
+    .describe("Assembled from addr:* tags if present, else null. Never invented."),
+  opening_hours_raw: z
+    .string()
+    .nullable()
+    .describe(
+      "The OSM 'opening_hours' tag verbatim, e.g. 'Mo-Fr 09:00-17:00; Sa off'. This is " +
+        "raw OSM opening_hours syntax — copy it exactly, do not interpret, summarize, " +
+        "translate, or reformat it into HH:MM. Null if the source has no opening_hours tag.",
+    ),
+  wikidata: z.string().nullable().describe("OSM 'wikidata' tag verbatim (e.g. 'Q12345'), or null."),
+  wikipedia: z
+    .string()
+    .nullable()
+    .describe("OSM 'wikipedia' tag verbatim (e.g. 'en:Cherrapunji'), or null."),
+  prominence: z
+    .number()
+    .min(0)
+    .describe(
+      "A deterministic notability score computed from OSM tag signals — see " +
+        "PROMINENCE_WEIGHTS in src/tools/places.ts. Not itself a sourced fact about the " +
+        "place; a ranking signal only. Higher means more likely a genuine highlight. " +
+        "findPlaces sorts by this but never filters on it — low scores can still be " +
+        "useful filler for a quiet afternoon.",
+    ),
+});
+export type PlaceCandidate = z.infer<typeof PlaceCandidateSchema>;
 
 export const DestinationSchema = z.object({
   name: z.string(),

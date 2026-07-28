@@ -18,4 +18,6 @@ export const LIMITS = {
   maxSchemaRetries: 2,
   /** Parallel Research agents. Raise carefully — this is your main cost multiplier. */
   maxParallelResearch: 4,
+  /** Retries for a tool call hitting a transient upstream failure (429/5xx). */
+  maxToolRetries: 3,
 } as const;
