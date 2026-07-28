@@ -240,12 +240,25 @@ export const DestinationJudgmentSchema = DestinationSchema.omit({
 });
 export type DestinationJudgment = z.infer<typeof DestinationJudgmentSchema>;
 
+/**
+ * Never "estimated" the way EstimatedFlagsSchema means it — this is never a
+ * model guess, always code-computed. What it distinguishes is which KIND of
+ * code computed it: real routing (not built yet), the elevation-tiered
+ * heuristic in checks/feasibility.ts, or "unknown" when even the heuristic's
+ * input (elevation) was unavailable and the number is a flat-tier placeholder
+ * that must not be trusted as a hard fact. See estimateTransitMinutes.
+ */
+export const TransitSourceSchema = z.enum(["routed", "heuristic", "unknown"]);
+export type TransitSource = z.infer<typeof TransitSourceSchema>;
+
 export const ScheduledStopSchema = z.object({
   activity: ActivitySchema,
   start: z.string().describe("HH:MM local"),
   end: z.string().describe("HH:MM local"),
   transit_minutes_from_previous: z.number().int().min(0),
+  transit_source: TransitSourceSchema,
 });
+export type ScheduledStop = z.infer<typeof ScheduledStopSchema>;
 
 export const DayPlanSchema = z.object({
   date: isoDate,
