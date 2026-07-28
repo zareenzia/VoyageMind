@@ -1,0 +1,180 @@
+[
+  {
+    "id": "meghalaya-happy-path",
+    "brief": {
+      "origin": "Dhaka",
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": "2026-11-10",
+      "end_date": "2026-11-14",
+      "nights": 4,
+      "flexible_dates": false,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": 45000,
+      "budget_currency": "BDT",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": ["waterfalls", "nature", "photography"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "destinationName": "Meghalaya",
+    "country": "India",
+    "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+    "candidates": [
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 245731299, "name": "Sohra (Cherrapunji)",
+        "category": "attraction", "location": { "lat": 25.2777336, "lng": 91.7292416 },
+        "address": null, "opening_hours_raw": null, "wikidata": "Q211030",
+        "wikipedia": "en:Cherrapunji", "prominence": 8.2
+      },
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 1262013973, "name": "Mawsynram",
+        "category": "attraction", "location": { "lat": 25.2988198, "lng": 91.5824514 },
+        "address": null, "opening_hours_raw": null, "wikidata": "Q2708616",
+        "wikipedia": "en:Mawsynram", "prominence": 7.6
+      },
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 3178190161, "name": "Mawlynnong",
+        "category": "attraction", "location": { "lat": 25.2019507, "lng": 91.9155148 },
+        "address": null, "opening_hours_raw": null, "wikidata": "Q6794437",
+        "wikipedia": "en:Mawlynnong", "prominence": 7.6
+      },
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 3933644720, "name": "Nohkalikai Falls",
+        "category": "waterfall", "location": { "lat": 25.2756548, "lng": 91.6865847 },
+        "address": null, "opening_hours_raw": null, "wikidata": "Q3631209",
+        "wikipedia": "en:Nohkalikai Falls", "prominence": 7.5
+      },
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 5352802188,
+        "name": "Nohsngithiang Falls (Seven Sisters)", "category": "waterfall",
+        "location": { "lat": 25.2430438, "lng": 91.7386669 }, "address": null,
+        "opening_hours_raw": null, "wikidata": null, "wikipedia": null, "prominence": 3.4
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 554672537, "name": "Blue Lagoon",
+        "category": "attraction", "location": { "lat": 25.250652, "lng": 91.673789 },
+        "address": null, "opening_hours_raw": null, "wikidata": null, "wikipedia": null,
+        "prominence": 2.8
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 390202521, "name": "Root bridge",
+        "category": "attraction", "location": { "lat": 25.2576269, "lng": 91.6753688 },
+        "address": null, "opening_hours_raw": null, "wikidata": null, "wikipedia": null,
+        "prominence": 2.7
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 366116299, "name": "Long root bridge",
+        "category": "attraction", "location": { "lat": 25.2489294, "lng": 91.6799472 },
+        "address": null, "opening_hours_raw": "Mo-Su 07:00-17:00", "wikidata": null,
+        "wikipedia": null, "prominence": 2.6
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 554672508, "name": "Wei Sawdong",
+        "category": "attraction", "location": { "lat": 25.2915126, "lng": 91.6781804 },
+        "address": null, "opening_hours_raw": null, "wikidata": null, "wikipedia": null,
+        "prominence": 2.6
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 554749520,
+        "name": "Double decker root bridge", "category": "attraction",
+        "location": { "lat": 25.2514562, "lng": 91.6716581 }, "address": null,
+        "opening_hours_raw": null, "wikidata": null, "wikipedia": null, "prominence": 2.6
+      }
+    ],
+    "expect": {
+      "name": "Meghalaya",
+      "country": "India",
+      "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+      "activities_min": 3,
+      "best_months_min": 1,
+      "best_months_exclude": [6, 7, 8, 9]
+    },
+    "why": "Real, prominence-ranked Meghalaya candidates. Also the monsoon stress case: Sohra is one of the wettest places on Earth, and best_months must not include peak monsoon (Jun-Sep) even though that's the season locals and tourism material discuss most — recall gets the facts right and the recommendation backwards. See the TODO on DestinationSchema.best_months."
+  },
+  {
+    "id": "no-candidates-adversarial",
+    "brief": {
+      "origin": null,
+      "destinations": ["a remote corner of Meghalaya"],
+      "region_hint": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": 2,
+      "flexible_dates": true,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "relaxed",
+      "interests": ["hiking"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "destinationName": "a remote corner of Meghalaya",
+    "country": "India",
+    "centre": { "lat": 25.4, "lng": 91.4 },
+    "candidates": [],
+    "expect": {
+      "name": "a remote corner of Meghalaya",
+      "country": "India",
+      "activities": []
+    },
+    "why": "No mapped places came back for this area (an empty Overpass result, or a geocode landing somewhere sparse). Guide must return a valid Destination with activities: [] and say so — never invent a placeholder activity to avoid an empty-looking result."
+  },
+  {
+    "id": "sparse-candidates-packed-pace",
+    "brief": {
+      "origin": null,
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": 5,
+      "flexible_dates": true,
+      "travellers": { "count": 4, "adults": 4, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "packed",
+      "interests": ["hiking", "waterfalls", "museums", "nightlife", "shopping"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "destinationName": "Meghalaya",
+    "country": "India",
+    "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+    "candidates": [
+      {
+        "source": "osm", "osm_type": "node", "osm_id": 3933644720, "name": "Nohkalikai Falls",
+        "category": "waterfall", "location": { "lat": 25.2756548, "lng": 91.6865847 },
+        "address": null, "opening_hours_raw": null, "wikidata": "Q3631209",
+        "wikipedia": "en:Nohkalikai Falls", "prominence": 7.5
+      },
+      {
+        "source": "osm", "osm_type": "way", "osm_id": 554672508, "name": "Wei Sawdong",
+        "category": "attraction", "location": { "lat": 25.2915126, "lng": 91.6781804 },
+        "address": null, "opening_hours_raw": null, "wikidata": null, "wikipedia": null,
+        "prominence": 2.6
+      }
+    ],
+    "expect": {
+      "activities_min": 1,
+      "activities_max": 2
+    },
+    "why": "A packed pace and five broad interests would normally push toward many activities, but only two real candidates exist. Guide must not fabricate a third to satisfy the pace — it must return at most what was actually given, exactly the failure mode a model handed real places and asked for 'a nice full day' tends toward."
+  }
+]
