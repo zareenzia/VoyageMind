@@ -1,0 +1,123 @@
+[
+  {
+    "id": "vague-warm-december",
+    "today": "2026-07-27",
+    "request": "somewhere warm in December, around 2 grand for me and my wife",
+    "expect": {
+      "destinations": [],
+      "region_hint_not_null": true,
+      "budget_total_usd": 2000,
+      "travellers.adults": 2,
+      "travellers.count": 2,
+      "open_questions_min": 1
+    },
+    "why": "Baseline. Must not invent a destination. Must flag missing origin."
+  },
+  {
+    "id": "impossible-budget",
+    "today": "2026-07-27",
+    "request": "Two weeks in Switzerland in August, budget $400 total including flights from Dhaka",
+    "expect": {
+      "destinations_include": ["Switzerland"],
+      "budget_total_usd": 400,
+      "budget_includes_flights": true,
+      "open_questions_min": 1
+    },
+    "why": "Intake must record the number faithfully and flag it, not silently 'fix' the budget."
+  },
+  {
+    "id": "single-day",
+    "today": "2026-07-27",
+    "request": "I have one free day in Istanbul this Saturday, what should I do",
+    "expect": {
+      "destinations_include": ["Istanbul"],
+      "nights": null,
+      "start_date": "2026-08-01",
+      "budget_total_usd": null
+    },
+    "why": "Relative date resolution. No nights. Must not invent a budget."
+  },
+  {
+    "id": "group-with-constraints",
+    "today": "2026-07-27",
+    "request": "6 of us, 2 with wheelchairs, Rome for 4 nights in October. Strictly halal food. No budget limit really but keep it sensible.",
+    "expect": {
+      "destinations_include": ["Rome"],
+      "travellers.count": 6,
+      "nights": 4,
+      "dietary_min": 1,
+      "mobility_needs_min": 1,
+      "budget_total_usd": null
+    },
+    "why": "Constraints must survive intake intact — they drive filtering downstream."
+  },
+  {
+    "id": "packed-pace-signal",
+    "today": "2026-07-27",
+    "request": "5 days in Tokyo, I want to see absolutely everything, cram it in, don't care about sleep",
+    "expect": {
+      "destinations_include": ["Tokyo"],
+      "pace": "packed",
+      "nights": 5
+    },
+    "why": "Pace inference from language."
+  },
+  {
+    "id": "relaxed-pace-signal",
+    "today": "2026-07-27",
+    "request": "burnt out. week on a beach somewhere in Thailand, books and nothing else",
+    "expect": {
+      "pace": "relaxed",
+      "nights": 7,
+      "region_hint_not_null": true
+    },
+    "why": "Opposite pace signal, plus vague destination inside a named country."
+  },
+  {
+    "id": "multi-city",
+    "today": "2026-07-27",
+    "request": "Barcelona then Lisbon, 10 nights split however makes sense, flying from London, mid Sept, £3000",
+    "expect": {
+      "destinations_include": ["Barcelona", "Lisbon"],
+      "origin_not_null": true,
+      "nights": 10,
+      "budget_total_usd_not_null": true
+    },
+    "why": "Multiple destinations preserved in order. Non-USD budget must be handled, not dropped."
+  },
+  {
+    "id": "visa-mention",
+    "today": "2026-07-27",
+    "request": "Bangladeshi passport, thinking about Japan in spring, 8 nights, is that doable",
+    "expect": {
+      "destinations_include": ["Japan"],
+      "visa_constraints_min": 1,
+      "nights": 8
+    },
+    "why": "Nationality must land in visa_constraints, not be discarded as chatter."
+  },
+  {
+    "id": "no-dates-at-all",
+    "today": "2026-07-27",
+    "request": "always wanted to see the northern lights",
+    "expect": {
+      "start_date": null,
+      "end_date": null,
+      "nights": null,
+      "destinations": [],
+      "open_questions_min": 2
+    },
+    "why": "Near-empty input. Everything null, multiple open questions, no hallucinated plan."
+  },
+  {
+    "id": "flexible-dates",
+    "today": "2026-07-27",
+    "request": "4 nights in Kyoto sometime in the next few months, whenever is cheapest",
+    "expect": {
+      "destinations_include": ["Kyoto"],
+      "nights": 4,
+      "flexible_dates": true
+    },
+    "why": "Flexibility flag drives whether Pricing searches a date range."
+  }
+]
