@@ -264,7 +264,11 @@ export const DayPlanSchema = z.object({
   date: isoDate,
   base_city: z.string(),
   stops: z.array(ScheduledStopSchema),
-  lodging_cost_usd: z.number().min(0),
+  // Nullable: there is no lodging tool yet (spec §12/§11 Phase 0 limitation). A
+  // model guess here would flow straight into computeTotalUsd and therefore into
+  // the OVER_BUDGET hard failure — a fabrication laundered into a "hard" result.
+  // Null means "not priced," never a guessed number and never 0.
+  lodging_cost_usd: z.number().min(0).nullable(),
   notes: z.string().nullable(),
 });
 export type DayPlan = z.infer<typeof DayPlanSchema>;
@@ -272,19 +276,102 @@ export type DayPlan = z.infer<typeof DayPlanSchema>;
 export const ItinerarySchema = z.object({
   brief_summary: z.string().max(600),
   days: z.array(DayPlanSchema).min(1),
-  flights_cost_usd: z.number().min(0),
+  // Nullable for the same reason as lodging_cost_usd — no transport/flights tool
+  // yet. Only meaningful when brief.budget_includes_flights is true; see
+  // computeTotalUsd.
+  flights_cost_usd: z.number().min(0).nullable(),
   estimated_total_usd: z
       .number()
       .min(0)
-      .describe("Computed in src/checks/, never by a model. Present here for convenience only."),
+      .describe(
+        "Computed in src/checks/, never by a model. May be a PARTIAL total — see " +
+          "estimated_total_complete.",
+      ),
+  // False whenever lodging_cost_usd or (if budget_includes_flights) flights_cost_usd
+  // is null anywhere in the trip. computeTotalUsd sets both together — see there.
+  estimated_total_complete: z.boolean(),
+  // Code-attached: true when brief.start_date was null and dates were constructed
+  // by tools/dates.ts rather than given. Never something the model states — see
+  // checkDay's handling of CLOSED_THAT_DAY, which downgrades to a note when this
+  // is true (the weekday itself is notional, not just the transit time).
+  dates_provisional: z.boolean(),
+  // Code-only observations from ASSEMBLING the itinerary (as opposed to VALIDATING
+  // it, which is checkItinerary's job and lands in CritiqueResult.soft_notes
+  // instead). E.g. "these destinations share no common best_months" from
+  // tools/dates.ts's combineBestMonths. Never model-populated.
+  construction_notes: z.array(z.string()),
 });
 export type Itinerary = z.infer<typeof ItinerarySchema>;
+
+/**
+ * What the Itinerary agent's model call actually produces: an ORDER, nothing
+ * clock-related. Rule 2 — scheduling is arithmetic. The model sees full
+ * Destination[] data (durations, opening hours, the pace's day-start/day-end
+ * window) as input context so it can judge what reasonably fits, but it never
+ * states a time itself: code walks this ordering, attaching real start/end times
+ * and transit_minutes_from_previous (via estimateTransitMinutes) afterward. If
+ * the model can't state a time, it can't state a wrong one — same discipline as
+ * DestinationJudgmentSchema omitting centre.
+ */
+export const ActivityRefSchema = z.object({
+  osm_type: z.enum(["node", "way", "relation"]),
+  osm_id: z.number().int(),
+});
+
+export const DayOrderingSchema = z.object({
+  date_slot: z
+    .number()
+    .int()
+    .min(0)
+    .describe(
+      "0-indexed day within the trip (0 = first day). Code maps this to an actual " +
+        "calendar date — never state a date yourself.",
+    ),
+  base_city: z.string(),
+  activities: z
+    .array(ActivityRefSchema)
+    .describe(
+      "In visiting order. Each osm_type/osm_id must exactly match one Activity from " +
+        "the Destination[] you were given — never invented, never altered. Checked " +
+        "after you respond.",
+    ),
+});
+
+export const ItineraryJudgmentSchema = z.object({
+  brief_summary: z.string().max(600),
+  days: z.array(DayOrderingSchema).min(1),
+});
+export type ItineraryJudgment = z.infer<typeof ItineraryJudgmentSchema>;
+
+/** A single deterministic check result — the shape src/checks/feasibility.ts
+ * produces and CritiqueResult.hard_failures carries verbatim. Structured, not a
+ * bare string, so a `code` like "OVER_BUDGET" stays matchable downstream instead
+ * of being lost to prose. */
+export const CheckFailureSchema = z.object({
+  code: z.string(),
+  message: z.string(),
+});
+export type CheckFailure = z.infer<typeof CheckFailureSchema>;
 
 /** Output of the Critic. Deterministic checks + model judgement, merged. */
 export const CritiqueResultSchema = z.object({
   verdict: z.enum(["pass", "revise", "infeasible"]),
-  hard_failures: z.array(z.string()).describe("From src/checks/ — objective, not opinion"),
+  hard_failures: z.array(CheckFailureSchema).describe("From src/checks/ — objective, not opinion"),
   soft_notes: z.array(z.string()).describe("Model judgement: dull day, bad sequencing, etc."),
   suggested_fixes: z.array(z.string()),
 });
 export type CritiqueResult = z.infer<typeof CritiqueResultSchema>;
+
+/**
+ * What the Critic agent's model call actually produces. `verdict` and
+ * `hard_failures` are computed by code from checkItinerary(), never the model's
+ * call — a model asked for a verdict will eventually rationalize "pass" on an
+ * over-budget plan that reads well. The model receives the itinerary AND the
+ * already-computed hard failures as context (so suggested_fixes can respond to
+ * them) but only ever outputs soft_notes/suggested_fixes.
+ */
+export const CritiqueJudgmentSchema = CritiqueResultSchema.omit({
+  verdict: true,
+  hard_failures: true,
+});
+export type CritiqueJudgment = z.infer<typeof CritiqueJudgmentSchema>;

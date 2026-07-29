@@ -48,6 +48,19 @@ function makeDay(stops: ScheduledStop[], date = "2026-07-27"): DayPlan {
   return { date, base_city: "Sohra", stops, lodging_cost_usd: 0, notes: null };
 }
 
+function makeItinerary(days: DayPlan[], overrides: Partial<Itinerary> = {}): Itinerary {
+  return {
+    brief_summary: "test",
+    days,
+    flights_cost_usd: 0,
+    estimated_total_usd: 0,
+    estimated_total_complete: true,
+    dates_provisional: false,
+    construction_notes: [],
+    ...overrides,
+  };
+}
+
 function makeBrief(overrides: Partial<TripBrief> = {}): TripBrief {
   return {
     origin: null,
@@ -132,28 +145,51 @@ describe("estimateTransitMinutes", () => {
 });
 
 describe("checkBudget", () => {
-  const itinerary: Itinerary = {
-    brief_summary: "test",
-    days: [makeDay([makeStop({ activity: makeActivity({ cost_usd_per_person: 100 }) })])],
-    flights_cost_usd: 0,
-    estimated_total_usd: 200,
-  };
+  const itinerary = makeItinerary([
+    makeDay([makeStop({ activity: makeActivity({ cost_usd_per_person: 100 }) })]),
+  ]);
 
   it("passes when total is within budget", () => {
     const brief = makeBrief({ budget_amount: 500, budget_currency: "USD" });
-    expect(checkBudget(itinerary, brief)).toEqual([]);
+    expect(checkBudget(itinerary, brief)).toEqual({ failures: [], notes: [] });
   });
 
   it("fails when total exceeds budget", () => {
     const brief = makeBrief({ budget_amount: 50, budget_currency: "USD" });
-    const failures = checkBudget(itinerary, brief);
+    const { failures, notes } = checkBudget(itinerary, brief);
     expect(failures).toHaveLength(1);
     expect(failures[0]!.code).toBe("OVER_BUDGET");
+    expect(notes).toEqual([]);
   });
 
   it("has no opinion when no budget was stated", () => {
     const brief = makeBrief({ budget_amount: null, budget_currency: null });
-    expect(checkBudget(itinerary, brief)).toEqual([]);
+    expect(checkBudget(itinerary, brief)).toEqual({ failures: [], notes: [] });
+  });
+
+  it("still hard-fails OVER_BUDGET when incomplete, if known costs alone already exceed budget", () => {
+    // 2 people * $100/head = $200 in known activity cost. Lodging is unknown
+    // (null), but $200 alone already exceeds a $50 budget — no lodging figure
+    // could bring that back under, since costs are never negative.
+    const day = makeDay([makeStop({ activity: makeActivity({ cost_usd_per_person: 100 }) })]);
+    day.lodging_cost_usd = null;
+    const incomplete = makeItinerary([day]);
+    const brief = makeBrief({ budget_amount: 50, budget_currency: "USD" });
+    const { failures, notes } = checkBudget(incomplete, brief);
+    expect(failures).toHaveLength(1);
+    expect(failures[0]!.code).toBe("OVER_BUDGET");
+    expect(notes).toEqual([]);
+  });
+
+  it("downgrades to a note (not a pass, not a failure) when incomplete and known costs are under budget", () => {
+    const day = makeDay([makeStop({ activity: makeActivity({ cost_usd_per_person: 100 }) })]);
+    day.lodging_cost_usd = null; // unpriced — no lodging tool yet
+    const incomplete = makeItinerary([day]);
+    const brief = makeBrief({ budget_amount: 5000, budget_currency: "USD" });
+    const { failures, notes } = checkBudget(incomplete, brief);
+    expect(failures).toEqual([]);
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toContain("incomplete");
   });
 });
 
@@ -295,6 +331,43 @@ describe("checkDay — transit_source 'unknown' is downgraded to a note, not a h
   });
 });
 
+describe("checkDay — provisional dates downgrade CLOSED_THAT_DAY only, not the whole day", () => {
+  const limits = DEFAULT_LIMITS.relaxed;
+
+  it("downgrades CLOSED_THAT_DAY to a note when datesProvisional is true", () => {
+    const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
+    const day = makeDay([
+      makeStop({
+        activity: makeActivity({ name: "Maybe-Closed Museum", closed_days: [weekday] }),
+      }),
+    ]);
+    const { failures, notes } = checkDay(day, limits, true);
+    expect(failures.map((f) => f.code)).not.toContain("CLOSED_THAT_DAY");
+    expect(notes.some((n) => n.includes("Maybe-Closed Museum") && n.includes("provisional"))).toBe(
+      true,
+    );
+  });
+
+  it("still hard-fails CLOSED_THAT_DAY when dates are real (datesProvisional false/default)", () => {
+    const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
+    const day = makeDay([makeStop({ activity: makeActivity({ closed_days: [weekday] }) })]);
+    const { failures } = checkDay(day, limits);
+    expect(failures.map((f) => f.code)).toContain("CLOSED_THAT_DAY");
+  });
+
+  it("does not affect BEFORE_OPENING/AFTER_CLOSING, which depend on clock time, not weekday", () => {
+    const day = makeDay([
+      makeStop({
+        start: "07:00",
+        end: "08:00",
+        activity: makeActivity({ opens: "09:00" }),
+      }),
+    ]);
+    const { failures } = checkDay(day, limits, true);
+    expect(failures.map((f) => f.code)).toContain("BEFORE_OPENING");
+  });
+});
+
 describe("checkItinerary", () => {
   it("aggregates budget, per-day failures/notes, and date-range checks together", () => {
     const brief = makeBrief({
@@ -304,28 +377,23 @@ describe("checkItinerary", () => {
       start_date: "2026-07-27",
       end_date: "2026-07-27",
     });
-    const itinerary: Itinerary = {
-      brief_summary: "test",
-      days: [
-        makeDay(
-          [
-            makeStop({ activity: makeActivity({ cost_usd_per_person: 1000 }) }),
-            makeStop({
-              start: "10:10",
-              end: "11:00",
-              transit_minutes_from_previous: 60,
-              transit_source: "unknown",
-              activity: makeActivity({ name: "Far Spot" }),
-            }),
-          ],
-          "2026-07-27",
-        ),
-        makeDay([makeStop()], "2026-07-27"), // duplicate date
-        makeDay([makeStop()], "2026-07-30"), // after end_date
-      ],
-      flights_cost_usd: 0,
-      estimated_total_usd: 2000,
-    };
+    const itinerary = makeItinerary([
+      makeDay(
+        [
+          makeStop({ activity: makeActivity({ cost_usd_per_person: 1000 }) }),
+          makeStop({
+            start: "10:10",
+            end: "11:00",
+            transit_minutes_from_previous: 60,
+            transit_source: "unknown",
+            activity: makeActivity({ name: "Far Spot" }),
+          }),
+        ],
+        "2026-07-27",
+      ),
+      makeDay([makeStop()], "2026-07-27"), // duplicate date
+      makeDay([makeStop()], "2026-07-30"), // after end_date
+    ]);
 
     const { failures, notes } = checkItinerary(itinerary, brief);
     const codes = failures.map((f) => f.code);

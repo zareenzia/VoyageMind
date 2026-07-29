@@ -1,4 +1,4 @@
-import type { DayPlan, Itinerary, TransitSource, TripBrief } from "../schemas/index.js";
+import type { CheckFailure, DayPlan, Itinerary, TransitSource, TripBrief } from "../schemas/index.js";
 import { budgetInUsd } from "../tools/currency.js";
 
 /**
@@ -6,13 +6,10 @@ import { budgetInUsd } from "../tools/currency.js";
  * The Critic agent calls these and reports the results as hard_failures.
  */
 
-export interface CheckFailure {
-  code: string;
-  message: string;
-}
+export type { CheckFailure };
 
 /** Hard failures plus non-blocking notes — see checkDay's handling of
- * transit_source "unknown" for where notes come from. */
+ * transit_source "unknown" and "provisional dates" for where notes come from. */
 export interface CheckResult {
   failures: CheckFailure[];
   notes: string[];
@@ -118,36 +115,86 @@ export function estimateTransitMinutes(
 }
 
 /** Total cost. Computed, never trusted from the model. */
-export function computeTotalUsd(itinerary: Itinerary, brief: TripBrief): number {
+export interface TotalCostResult {
+  total_usd: number;
+  /** False if lodging or (when it counts toward the budget) flights cost is
+   * unknown anywhere in the trip — no lodging/transport tool exists yet (spec
+   * §12/§11 Phase 0 limitation). `total_usd` is still the sum of whatever IS
+   * known — a real partial figure, not a placeholder — just not the full trip
+   * cost. */
+  complete: boolean;
+}
+
+/** Never trusted from the model. May be partial — see `complete`. */
+export function computeTotalUsd(itinerary: Itinerary, brief: TripBrief): TotalCostResult {
   const people = brief.travellers.count;
   const activities = itinerary.days.reduce(
     (sum, day) =>
       sum + day.stops.reduce((s, stop) => s + stop.activity.cost_usd_per_person * people, 0),
     0,
   );
-  const lodging = itinerary.days.reduce((sum, day) => sum + day.lodging_cost_usd, 0);
-  const flights = brief.budget_includes_flights ? itinerary.flights_cost_usd : 0;
-  return Math.round((activities + lodging + flights) * 100) / 100;
+
+  let lodgingComplete = true;
+  const lodging = itinerary.days.reduce((sum, day) => {
+    if (day.lodging_cost_usd === null) {
+      lodgingComplete = false;
+      return sum;
+    }
+    return sum + day.lodging_cost_usd;
+  }, 0);
+
+  let flightsComplete = true;
+  let flights = 0;
+  if (brief.budget_includes_flights) {
+    if (itinerary.flights_cost_usd === null) flightsComplete = false;
+    else flights = itinerary.flights_cost_usd;
+  }
+
+  return {
+    total_usd: Math.round((activities + lodging + flights) * 100) / 100,
+    complete: lodgingComplete && flightsComplete,
+  };
 }
 
-export function checkBudget(itinerary: Itinerary, brief: TripBrief): CheckFailure[] {
+export function checkBudget(itinerary: Itinerary, brief: TripBrief): CheckResult {
   // Conversion happens in src/tools/currency.ts, not here and not in an agent.
   const budgetUsd = budgetInUsd(brief.budget_amount, brief.budget_currency);
-  if (budgetUsd === null) return [];
-  const total = computeTotalUsd(itinerary, brief);
-  if (total <= budgetUsd) return [];
+  if (budgetUsd === null) return { failures: [], notes: [] };
+
+  const { total_usd, complete } = computeTotalUsd(itinerary, brief);
   const stated =
     brief.budget_currency === "USD"
       ? `$${brief.budget_amount}`
       : `${brief.budget_amount} ${brief.budget_currency} (~$${budgetUsd})`;
-  return [
-    {
-      code: "OVER_BUDGET",
-      message: `Total $${total} exceeds stated budget ${stated} by $${(
-        total - budgetUsd
-      ).toFixed(2)}.`,
-    },
-  ];
+
+  if (total_usd > budgetUsd) {
+    // Every cost term is non-negative, so a total that's already over budget
+    // stays over budget however the unknown pieces turn out — sound as a hard
+    // failure even when incomplete. Only "looks fine so far" needs downgrading.
+    const basis = complete ? "Total" : "Known costs alone (excluding lodging and/or flights)";
+    return {
+      failures: [
+        {
+          code: "OVER_BUDGET",
+          message: `${basis} $${total_usd} exceed${complete ? "s" : ""} stated budget ${stated} ` +
+            `by $${(total_usd - budgetUsd).toFixed(2)}.`,
+        },
+      ],
+      notes: [],
+    };
+  }
+
+  if (!complete) {
+    return {
+      failures: [],
+      notes: [
+        `Budget check is incomplete: lodging and/or flights cost is unknown, so the ` +
+          `$${total_usd} shown excludes them. This cannot be verified as a pass.`,
+      ],
+    };
+  }
+
+  return { failures: [], notes: [] };
 }
 
 export interface DayLimits {
@@ -164,7 +211,7 @@ export const DEFAULT_LIMITS: Record<TripBrief["pace"], DayLimits> = {
   packed: { maxTransitMinutes: 240, maxActiveMinutes: 600, maxHopKm: 60, dayStart: "07:30", dayEnd: "23:00" },
 };
 
-export function checkDay(day: DayPlan, limits: DayLimits): CheckResult {
+export function checkDay(day: DayPlan, limits: DayLimits, datesProvisional = false): CheckResult {
   const failures: CheckFailure[] = [];
   const notes: string[] = [];
   if (day.stops.length === 0) return { failures, notes };
@@ -218,10 +265,20 @@ export function checkDay(day: DayPlan, limits: DayLimits): CheckResult {
 
     const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
     if (stop.activity.closed_days.includes(weekday)) {
-      failures.push({
-        code: "CLOSED_THAT_DAY",
-        message: `${day.date}: "${stop.activity.name}" is closed on this weekday.`,
-      });
+      if (datesProvisional) {
+        // The weekday itself is notional — no date was given, so this isn't a
+        // verified conflict, just a possible one. Same treatment as
+        // transit_source: "unknown".
+        notes.push(
+          `${day.date}: "${stop.activity.name}" may be closed on this weekday, but the date ` +
+            `is provisional (no date was given), so this could not be verified.`,
+        );
+      } else {
+        failures.push({
+          code: "CLOSED_THAT_DAY",
+          message: `${day.date}: "${stop.activity.name}" is closed on this weekday.`,
+        });
+      }
     }
     if (stop.activity.opens && start < toMinutes(stop.activity.opens)) {
       failures.push({
@@ -275,13 +332,13 @@ export function checkDay(day: DayPlan, limits: DayLimits): CheckResult {
 
 export function checkItinerary(itinerary: Itinerary, brief: TripBrief): CheckResult {
   const limits = DEFAULT_LIMITS[brief.pace];
-  const dayResults = itinerary.days.map((day) => checkDay(day, limits));
+  const dayResults = itinerary.days.map((day) =>
+    checkDay(day, limits, itinerary.dates_provisional),
+  );
+  const budgetResult = checkBudget(itinerary, brief);
 
-  const failures = [
-    ...checkBudget(itinerary, brief),
-    ...dayResults.flatMap((r) => r.failures),
-  ];
-  const notes = dayResults.flatMap((r) => r.notes);
+  const failures = [...budgetResult.failures, ...dayResults.flatMap((r) => r.failures)];
+  const notes = [...budgetResult.notes, ...dayResults.flatMap((r) => r.notes)];
 
   const dates = itinerary.days.map((d) => d.date);
   if (new Set(dates).size !== dates.length) {

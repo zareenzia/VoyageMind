@@ -252,7 +252,29 @@ Absorbs the original **Local Guide**, **Recommendation** and part of **Safety**.
 `Destination[]` + `TripBrief` → `Itinerary`
 
 Sequences activities into days. Considers geography, opening hours, travel time, and pace.
-Does not compute the numbers — it *proposes*, and the Critic verifies.
+Does not compute the numbers — it *proposes*, and the Critic verifies. Concretely: the
+model's own output is an ORDER (day slot, base city, an ordered list of activity
+`osm_type`/`osm_id` pairs) — no clock times at all. Code walks that order and attaches
+`start`/`end`/`transit_minutes_from_previous` afterward. If the model can't state a time, it
+can't state a wrong one — same discipline as the Guide agent never restating `centre`.
+
+**`TripBrief.nights === null` is a hard stop, not a guess (decided 2026-07-29).** Building a
+schedule requires knowing how many days it covers; inventing a length (even a "reasonable
+default" like 3 nights) is fabricating a fact Intake should have caught. Phase 0's Itinerary
+agent throws clearly when `nights` is null, naming what's missing. The durable fix belongs one
+stage upstream: this should be an Intake `open_questions` entry that blocks the pipeline before
+Itinerary is ever invoked, not something Itinerary discovers and works around. Revisit once
+there's an orchestrator step (or human-approval flow, Phase 2) that can act on `open_questions`
+before continuing — for now, throwing is the honest Phase 0 behaviour.
+
+**No lodging or transport tool exists yet (Phase 0 limitation).** `DayPlan.lodging_cost_usd`
+and `Itinerary.flights_cost_usd` are nullable for exactly this reason — there is nothing to
+source a real figure from, and a model guess here would flow straight into the budget hard
+failure as a fabrication laundered into a "hard" result. `computeTotalUsd` returns a total plus
+an `estimated_total_complete` flag; the budget check still hard-fails when the *known* costs
+alone already exceed the stated budget (costs are never negative, so that's sound even when
+incomplete), and only downgrades to a note when the partial total looks fine but isn't the
+whole picture.
 
 ### 4. Critic Agent
 `Itinerary` → `CritiqueResult`
@@ -262,6 +284,17 @@ Two-part verdict:
   code. Over budget, impossible transit, venue closed that day, day too long.
 - **Soft notes** from model judgement — dull sequencing, three museums in a row, nothing
   booked for the evening.
+
+**`verdict` and `hard_failures` are code-computed, never the model's call (decided
+2026-07-29).** `checkItinerary()` runs first; the model receives the itinerary and the
+already-computed hard failures as context and produces only `soft_notes`/`suggested_fixes`.
+Code sets `verdict` deterministically from `hard_failures.length`. Otherwise a model
+eventually rationalizes `verdict: "pass"` on an over-budget plan that reads well, and that one
+failure mode undoes the entire checks layer. The Critic agent itself is two-state
+(`pass`/`revise`) — `infeasible` is not a model opinion or something Critic decides on its
+own; it's `orchestrator.ts` relabelling a `revise` verdict once `maxRevisionRounds` is
+exhausted with hard failures still outstanding, since round-counting is already that file's
+job (see below).
 
 Can return work to the Itinerary Agent. Hard cap of 2 revision rounds.
 
