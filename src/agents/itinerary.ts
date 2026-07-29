@@ -16,6 +16,7 @@ import { MODELS } from "../config.js";
 import {
   ItineraryJudgmentSchema,
   type Activity,
+  type CritiqueResult,
   type Destination,
   type DayPlan,
   type Itinerary,
@@ -88,10 +89,42 @@ function buildPrompt(
   destinations: Destination[],
   dayCount: number,
   limits: DayLimits,
+  revision?: ItineraryInput["revision"],
 ): string {
   return [
     `Trip length: ${dayCount} day(s) — produce date_slot 0 through ${dayCount - 1}.`,
     ``,
+    ...(revision
+      ? [
+          `This is a REVISION of a previous attempt. The Critic found problems — fix them,`,
+          `don't just re-roll a new ordering from scratch:`,
+          ``,
+          `Hard failures (must be resolved):`,
+          JSON.stringify(revision.critique.hard_failures, null, 2),
+          ``,
+          `Suggested fixes:`,
+          JSON.stringify(revision.critique.suggested_fixes, null, 2),
+          ``,
+          `Soft notes (address if you can, not required):`,
+          JSON.stringify(revision.critique.soft_notes, null, 2),
+          ``,
+          `Your previous attempt's ordering, for reference:`,
+          JSON.stringify(
+            revision.previousItinerary.days.map((d) => ({
+              date: d.date,
+              base_city: d.base_city,
+              activities: d.stops.map((s) => ({
+                osm_type: s.activity.osm_type,
+                osm_id: s.activity.osm_id,
+                name: s.activity.name,
+              })),
+            })),
+            null,
+            2,
+          ),
+          ``,
+        ]
+      : []),
     `Traveller brief:`,
     `- party: ${brief.travellers.count} (${brief.travellers.adults} adults, ${brief.travellers.children} children)`,
     `- pace: ${brief.pace}`,
@@ -125,6 +158,13 @@ export interface ItineraryInput {
   /** Explicit, like IntakeInput.today — never `new Date()` internally, so evals
    * stay deterministic regardless of when they're run. */
   today: string;
+  /** Present when the orchestrator is re-running this after a Critic "revise"
+   * verdict. Surfaced to the model as context to fix, not just more input to
+   * reroll blindly — the same osm-id/date_slot provenance rules still apply. */
+  revision?: {
+    previousItinerary: Itinerary;
+    critique: CritiqueResult;
+  };
 }
 
 export async function runItinerary(input: ItineraryInput): Promise<Itinerary> {
@@ -177,7 +217,7 @@ export async function runItinerary(input: ItineraryInput): Promise<Itinerary> {
   const judgment = await runAgent({
     name: "itinerary",
     systemPrompt: SYSTEM_PROMPT,
-    prompt: buildPrompt(brief, destinations, dayCount, limits),
+    prompt: buildPrompt(brief, destinations, dayCount, limits, input.revision),
     schema: ItineraryJudgmentSchema,
     model: MODELS.reasoning,
     validate: (data) => {
