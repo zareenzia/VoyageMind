@@ -84,6 +84,52 @@ function summarizeList(items: string[]): string {
   return items.length > 0 ? items.join(", ") : "none stated";
 }
 
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+function monthName(month: number): string {
+  return MONTH_NAMES[month - 1]!;
+}
+
+/**
+ * Which months to target when no explicit start_date exists. A month the user
+ * actually named (date_expression: month_only/flexible_window) wins over the
+ * destination's own best_months — it's the user's trip. But honouring that
+ * silently is exactly the quiet failure best_months exists to catch: "Meghalaya
+ * in July" is peak monsoon, and the request is still honoured, just with the
+ * conflict surfaced as a note rather than buried (CLAUDE.md rule 9).
+ */
+function resolveTargetMonths(
+  brief: TripBrief,
+  destinations: Destination[],
+  notes: string[],
+): { months: number[]; partOfMonth: "early" | "mid" | "late" | null } {
+  const recommended = combineBestMonths(destinations);
+  const expr = brief.date_expression;
+  const userMonths =
+    expr?.kind === "month_only" ? [expr.month] : expr?.kind === "flexible_window" ? expr.months : null;
+
+  if (!userMonths) {
+    if (recommended.note) notes.push(recommended.note);
+    return { months: recommended.months, partOfMonth: null };
+  }
+
+  if (!userMonths.some((m) => recommended.months.includes(m))) {
+    notes.push(
+      `Requested ${userMonths.map(monthName).join("/")}, but the recommended visiting window ` +
+        `for ${destinations.map((d) => d.name).join(", ")} is ${recommended.months.map(monthName).join(", ")}. ` +
+        `Proceeding with the requested timing as stated.`,
+    );
+  }
+
+  return {
+    months: userMonths,
+    partOfMonth: expr?.kind === "month_only" ? expr.part_of_month : null,
+  };
+}
+
 function buildPrompt(
   brief: TripBrief,
   destinations: Destination[],
@@ -188,9 +234,8 @@ export async function runItinerary(input: ItineraryInput): Promise<Itinerary> {
     startDate = brief.start_date;
     datesProvisional = false;
   } else {
-    const combined = combineBestMonths(destinations);
-    if (combined.note) constructionNotes.push(combined.note);
-    startDate = pickProvisionalDates(today, nights, combined.months).start_date;
+    const { months, partOfMonth } = resolveTargetMonths(brief, destinations, constructionNotes);
+    startDate = pickProvisionalDates(today, nights, months, partOfMonth ?? undefined).start_date;
     datesProvisional = true;
   }
   // Each day's actual date comes from startDate + date_slot below — no separate

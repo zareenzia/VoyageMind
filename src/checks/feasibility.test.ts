@@ -66,6 +66,7 @@ function makeBrief(overrides: Partial<TripBrief> = {}): TripBrief {
     origin: null,
     destinations: ["Meghalaya"],
     region_hint: null,
+    date_expression: null,
     start_date: null,
     end_date: null,
     nights: 4,

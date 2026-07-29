@@ -10,9 +10,11 @@
       "travellers.count": 2,
       "open_questions_min": 2,
       "budget_amount": 2000,
-      "budget_currency": null
+      "budget_currency": null,
+      "date_expression.kind": "month_only",
+      "date_expression.month": 12
     },
-    "why": "Baseline. Must not invent a destination. Must flag missing origin. '2 grand' names no currency — recording a guess is worse than recording null and asking."
+    "why": "Baseline. Must not invent a destination. Must flag missing origin. '2 grand' names no currency — recording a guess is worse than recording null and asking. 'December' must land in date_expression, not be silently resolved into a guessed start_date."
   },
   {
     "id": "impossible-budget",
@@ -25,9 +27,11 @@
       "budget_includes_flights": true,
       "open_questions_min": 1,
       "budget_amount": 400,
-      "budget_currency": "USD"
+      "budget_currency": "USD",
+      "date_expression.kind": "month_only",
+      "date_expression.month": 8
     },
-    "why": "Intake must record the number faithfully and flag it, not silently 'fix' the budget."
+    "why": "Intake must record the number faithfully and flag it, not silently 'fix' the budget. 'in August' is a month_only expression, resolved later by tools/dates.ts, not by the model."
   },
   {
     "id": "single-day",
@@ -38,10 +42,13 @@
         "Istanbul"
       ],
       "nights": null,
+      "date_expression.kind": "next_weekday",
+      "date_expression.weekday": 6,
+      "date_expression.qualifier": "this",
       "start_date": "2026-08-01",
       "budget_amount": null
     },
-    "why": "Relative date resolution. No nights. Must not invent a budget."
+    "why": "The flaky case: 'this Saturday' must resolve to a code-computed date (tools/dates.ts), not a model guess — today 2026-07-27 is a Monday, so the soonest Saturday is 2026-08-01, deterministically. Previously this occasionally came back a day off because the model was computing it directly."
   },
   {
     "id": "group-with-constraints",
@@ -55,9 +62,11 @@
       "nights": 4,
       "dietary_min": 1,
       "mobility_needs_min": 1,
-      "budget_amount": null
+      "budget_amount": null,
+      "date_expression.kind": "month_only",
+      "date_expression.month": 10
     },
-    "why": "Constraints must survive intake intact — they drive filtering downstream."
+    "why": "Constraints must survive intake intact — they drive filtering downstream. 'in October' is month_only, not a model-computed start_date."
   },
   {
     "id": "packed-pace-signal",
@@ -69,9 +78,10 @@
       ],
       "pace": "packed",
       "nights": 4,
-      "open_questions_min": 1
+      "open_questions_min": 1,
+      "date_expression": null
     },
-    "why": "Pace inference from language. Also pins the days-vs-nights convention: '5 days' = 4 nights, and the assumption must be flagged."
+    "why": "Pace inference from language. Also pins the days-vs-nights convention: '5 days' = 4 nights, and the assumption must be flagged. No date/month language at all, so date_expression is null."
   },
   {
     "id": "relaxed-pace-signal",
@@ -87,9 +97,10 @@
       "open_questions_min": 1,
       "interests_include": [
         "beach"
-      ]
+      ],
+      "date_expression": null
     },
-    "why": "Opposite pace signal. Also pins destinations vs region_hint: a named country is a destination, not a region hint, and the unresolved area within it must be flagged."
+    "why": "Opposite pace signal. Also pins destinations vs region_hint: a named country is a destination, not a region hint, and the unresolved area within it must be flagged. 'a week' sets nights, not a calendar date — date_expression stays null."
   },
   {
     "id": "multi-city",
@@ -103,9 +114,11 @@
       "origin_not_null": true,
       "nights": 10,
       "budget_amount": 3000,
-      "budget_currency": "GBP"
+      "budget_currency": "GBP",
+      "date_expression.kind": "month_only",
+      "date_expression.month": 9
     },
-    "why": "Multiple destinations preserved in order. Non-USD budget must be handled, not dropped."
+    "why": "Multiple destinations preserved in order. Non-USD budget must be handled, not dropped. 'mid Sept' -> month_only(month=9); the 'mid' qualifier (part_of_month) is a bonus if captured, not asserted here since it's a secondary detail."
   },
   {
     "id": "visa-mention",
@@ -116,9 +129,11 @@
         "Japan"
       ],
       "visa_constraints_min": 1,
-      "nights": 8
+      "nights": 8,
+      "date_expression.kind": "flexible_window",
+      "date_expression.months_min": 2
     },
-    "why": "Nationality must land in visa_constraints, not be discarded as chatter."
+    "why": "Nationality must land in visa_constraints, not be discarded as chatter. 'in spring' is a named season, not a specific month — flexible_window, resolved against Japan's (Northern Hemisphere) spring by the model's own language understanding, not date arithmetic."
   },
   {
     "id": "no-dates-at-all",
@@ -129,7 +144,8 @@
       "end_date": null,
       "nights": null,
       "destinations": [],
-      "open_questions_min": 2
+      "open_questions_min": 2,
+      "date_expression": null
     },
     "why": "Near-empty input. Everything null, multiple open questions, no hallucinated plan."
   },
@@ -142,8 +158,9 @@
         "Kyoto"
       ],
       "nights": 4,
-      "flexible_dates": true
+      "flexible_dates": true,
+      "date_expression": null
     },
-    "why": "Flexibility flag drives whether Pricing searches a date range."
+    "why": "Flexibility flag drives whether Pricing searches a date range. 'sometime in the next few months' is relative to NOW with no nameable season — must stay null rather than the model forcing a guessed months array it can't reliably compute without knowing today's arithmetic implications."
   }
 ]

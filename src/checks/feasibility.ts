@@ -263,6 +263,9 @@ export function checkDay(day: DayPlan, limits: DayLimits, datesProvisional = fal
       }
     }
 
+    // 0=Sunday..6=Saturday — MUST match tools/dates.ts's convention (used to
+    // resolve "this Saturday" etc. against today); two weekday conventions in
+    // one codebase is a bug waiting to happen.
     const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
     if (stop.activity.closed_days.includes(weekday)) {
       if (datesProvisional) {

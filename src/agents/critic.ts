@@ -84,7 +84,12 @@ export interface CriticInput {
 
 export async function runCritic(input: CriticInput): Promise<CritiqueResult> {
   const { itinerary, brief } = input;
-  const { failures, notes } = checkItinerary(itinerary, brief);
+  const { failures, notes: checkNotes } = checkItinerary(itinerary, brief);
+  // construction_notes are code-only observations from ASSEMBLING the itinerary
+  // (e.g. a requested month conflicting with a destination's best_months) —
+  // they belong in the same non-blocking bucket as checkItinerary's own notes,
+  // not a bucket of their own. See ItinerarySchema.construction_notes.
+  const notes = [...itinerary.construction_notes, ...checkNotes];
 
   const judgment = await runAgent({
     name: "critic",

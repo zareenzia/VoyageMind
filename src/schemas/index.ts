@@ -22,6 +22,97 @@ export const TravellerSchema = z.object({
  * Fields the user did not specify are null, never guessed. `open_questions` is how
  * Intake reports what it could not determine.
  */
+/**
+ * Structured capture of relative/vague date language — "this Saturday", "in October",
+ * "sometime in spring". Resolving any of these against today's date is arithmetic
+ * (CLAUDE.md rule 2), and a model doing it silently produces exactly the failure this
+ * schema exists to prevent: a plausible date that's off by a day, a week, or a season.
+ * tools/dates.ts resolves every variant deterministically; the model states only what
+ * the text actually said.
+ */
+export const ExplicitDateSchema = z.object({
+  kind: z.literal("explicit"),
+  date: isoDate.describe(
+    "A complete date stated unambiguously, year included (or trivially given in the text). " +
+      "Pure reformatting to YYYY-MM-DD — never for a date that needs today's date to resolve; " +
+      "that's one of the other kinds.",
+  ),
+});
+
+export const NextWeekdaySchema = z.object({
+  kind: z.literal("next_weekday"),
+  weekday: z
+    .number()
+    .int()
+    .min(0)
+    .max(6)
+    .describe(
+      "0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday — " +
+        "JavaScript Date.getUTCDay() convention (NOT ISO 8601's 1=Monday). Must match the " +
+        "convention checks/feasibility.ts uses for closed_days.",
+    ),
+  qualifier: z
+    .enum(["this", "next", "bare"])
+    .describe(
+      "Which word the user actually used: 'this Saturday' -> \"this\", 'next Friday' -> " +
+        "\"next\", just 'Saturday' with no qualifier -> \"bare\". Do not collapse these — " +
+        "'this' and 'next' resolve to different dates, and which one the user said is the " +
+        "only reliable signal; do not guess which they meant.",
+    ),
+});
+
+export const MonthOnlySchema = z.object({
+  kind: z.literal("month_only"),
+  month: z
+    .number()
+    .int()
+    .min(1)
+    .max(12)
+    .describe("1=January .. 12=December. 'in October', 'mid September' -> 9. No day is known."),
+  year: z
+    .number()
+    .int()
+    .nullable()
+    .describe(
+      "Only if a year was stated explicitly. Null lets code pick the nearest future " +
+        "occurrence of this month relative to today — do not compute that yourself.",
+    ),
+  part_of_month: z
+    .enum(["early", "mid", "late"])
+    .nullable()
+    .describe(
+      "'early October' -> \"early\", 'mid September' -> \"mid\", 'late December' -> " +
+        "\"late\". Null if no qualifier was given (just 'in October'). Code maps this to a " +
+        "day of the month (roughly the 5th/15th/25th) — never pick the day yourself.",
+    ),
+});
+
+export const FlexibleWindowSchema = z.object({
+  kind: z.literal("flexible_window"),
+  months: z
+    .array(z.number().int().min(1).max(12))
+    .min(1)
+    .describe(
+      "Which calendar months a named season/phrase covers, from your own understanding of " +
+        "the term. Seasons are HEMISPHERE- and DESTINATION-dependent: 'spring' is roughly " +
+        "March-May for Japan but September-November for New Zealand — resolve against the " +
+        "named destination, not a single fixed mapping. This is interpreting language, not " +
+        "computing a date: you are naming which months qualify, never picking today's date.",
+    ),
+});
+
+/**
+ * `null` when the request has no calendar signal at all, OR the signal is relative to
+ * NOW with no nameable season ('sometime in the next few months', 'whenever is cheapest')
+ * — that case is flexible_dates: true with this left null, since which months "next few"
+ * means depends on today in a way you cannot reliably compute. Never resolve an actual
+ * date yourself in any variant below.
+ */
+export const DateExpressionSchema = z
+  .discriminatedUnion("kind", [ExplicitDateSchema, NextWeekdaySchema, MonthOnlySchema, FlexibleWindowSchema])
+  .nullable();
+export type DateExpression = z.infer<typeof DateExpressionSchema>;
+
 export const TripBriefSchema = z.object({
   origin: z.string().nullable(),
   destinations: z.array(z.string()).describe("Named places, or [] if user was vague"),
@@ -35,6 +126,9 @@ export const TripBriefSchema = z.object({
           "region hint: 'a beach in Thailand' -> destinations ['Thailand'], region_hint null, " +
           "interests ['beach'].",
       ),
+  date_expression: DateExpressionSchema,
+  // Code-computed from date_expression + today (see tools/dates.ts) — never stated by the
+  // model. See TripBriefJudgmentSchema, which omits this field entirely.
   start_date: isoDate.nullable(),
   end_date: isoDate.nullable(),
   nights: z
@@ -84,6 +178,16 @@ export const TripBriefSchema = z.object({
       .describe("What Intake could not determine and a human should confirm"),
 });
 export type TripBrief = z.infer<typeof TripBriefSchema>;
+
+/**
+ * What the Intake agent's model call actually produces. `start_date` is omitted —
+ * it's resolved from `date_expression` and `today` by tools/dates.ts, the same
+ * discipline as DestinationJudgmentSchema omitting centre. `end_date` stays
+ * model-stated: extracting an explicitly-given end date is reformatting, not
+ * arithmetic, so it isn't in the failure class this schema exists to close off.
+ */
+export const TripBriefJudgmentSchema = TripBriefSchema.omit({ start_date: true });
+export type TripBriefJudgment = z.infer<typeof TripBriefJudgmentSchema>;
 
 export const GeoPointSchema = z.object({
   lat: z.number().min(-90).max(90),
