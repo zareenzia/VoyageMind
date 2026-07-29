@@ -1,0 +1,191 @@
+[
+  {
+    "id": "clean-itinerary-passes",
+    "brief": {
+      "origin": "Dhaka",
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": "2026-11-10",
+      "end_date": "2026-11-10",
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": 45000,
+      "budget_currency": "BDT",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": ["nature"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "itinerary": {
+      "brief_summary": "A relaxed morning at Nohkalikai Falls.",
+      "days": [
+        {
+          "date": "2026-11-10",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "nohkalikai-falls", "name": "Nohkalikai Falls",
+                "location": { "lat": 25.2756548, "lng": 91.6865847 }, "address": null,
+                "category": "waterfall", "duration_minutes": 90, "cost_usd_per_person": 2,
+                "opens": "06:00", "closes": "18:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 3933644720,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:30",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": 20,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": 0,
+      "estimated_total_usd": 24,
+      "estimated_total_complete": true,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "expect": {
+      "verdict": "pass",
+      "hard_failures": []
+    },
+    "why": "A well-formed single-stop day with a generous budget and no scheduling conflicts must pass — the Critic must not invent a problem to fill soft_notes."
+  },
+  {
+    "id": "over-budget-fails-deterministically",
+    "brief": {
+      "origin": null,
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": "2026-11-10",
+      "end_date": "2026-11-10",
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": 100,
+      "budget_currency": "USD",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": [],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "itinerary": {
+      "brief_summary": "A single very expensive activity.",
+      "days": [
+        {
+          "date": "2026-11-10",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "expensive-tour", "name": "Private Helicopter Tour",
+                "location": { "lat": 25.2756548, "lng": 91.6865847 }, "address": null,
+                "category": "attraction", "duration_minutes": 60, "cost_usd_per_person": 5000,
+                "opens": null, "closes": null, "closed_days": [], "booking_required": true,
+                "notes": null, "osm_type": "node", "osm_id": 999999,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:00",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": 0,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": 0,
+      "estimated_total_usd": 5000,
+      "estimated_total_complete": true,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "expect": {
+      "verdict": "revise",
+      "hard_failures.0.code": "OVER_BUDGET"
+    },
+    "why": "$5000 in known cost against a $100 budget must hard-fail deterministically. The single stop has no transit/scheduling conflicts, so OVER_BUDGET should be the only failure — the model cannot soften or override this verdict."
+  },
+  {
+    "id": "multiple-simultaneous-hard-failures",
+    "brief": {
+      "origin": null,
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": "2026-11-10",
+      "end_date": "2026-11-10",
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": 100,
+      "budget_currency": "USD",
+      "budget_includes_flights": false,
+      "pace": "relaxed",
+      "interests": [],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "itinerary": {
+      "brief_summary": "A badly overloaded, overpriced day.",
+      "days": [
+        {
+          "date": "2026-11-10",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "spot-a", "name": "Spot A",
+                "location": { "lat": 25.2756548, "lng": 91.6865847 }, "address": null,
+                "category": "attraction", "duration_minutes": 60, "cost_usd_per_person": 5000,
+                "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 1,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:00",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            },
+            {
+              "activity": {
+                "id": "spot-b", "name": "Spot B",
+                "location": { "lat": 25.29, "lng": 91.70 }, "address": null,
+                "category": "attraction", "duration_minutes": 55, "cost_usd_per_person": 100,
+                "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 2,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "10:05", "end": "11:00",
+              "transit_minutes_from_previous": 400, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": 0,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": 0,
+      "estimated_total_usd": 5100,
+      "estimated_total_complete": true,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "expect": {
+      "verdict": "revise",
+      "hard_failures_min": 4
+    },
+    "why": "Adversarial: over budget, an impossible transit gap (5min available, 400 claimed), transit far over the relaxed-pace 120min cap, and a day far over the 360min active+transit cap, all at once. The Critic must still return a coherent result — real hard_failures, not a crash — and cannot negotiate any of them away."
+  }
+]

@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { runIntake } from "../src/agents/intake.js";
 import { runGuide } from "../src/agents/research.js";
 import { runItinerary } from "../src/agents/itinerary.js";
+import { runCritic } from "../src/agents/critic.js";
 
 /**
  * Property-based evals, across every agent. We assert properties of the output,
@@ -32,6 +33,7 @@ const SUITES: Record<string, { run: (input: Record<string, unknown>) => Promise<
   intake: { run: (input) => runIntake(input as unknown as Parameters<typeof runIntake>[0]) },
   guide: { run: (input) => runGuide(input as unknown as Parameters<typeof runGuide>[0]) },
   itinerary: { run: (input) => runItinerary(input as unknown as Parameters<typeof runItinerary>[0]) },
+  critic: { run: (input) => runCritic(input as unknown as Parameters<typeof runCritic>[0]) },
 };
 
 function get(obj: unknown, path: string): unknown {
