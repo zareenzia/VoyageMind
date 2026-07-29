@@ -124,29 +124,33 @@ npm run typecheck               # tsc --noEmit
 
 ## Current state
 
-**Built:** schemas for the whole pipeline · `runAgent` (validation, capped retry,
-schema-derived prompts, plus an optional post-schema `validate` hook for business
-rules like provenance) · Intake agent at 10/10 evals · Guide agent at 3/3 evals ·
-`checks/feasibility.ts` (budget, day feasibility, terrain-tiered transit-time
-estimate) · `tools/currency.ts`, `tools/places.ts`, `tools/geocode.ts`,
-`tools/elevation.ts`
+**Built — Phase 0 complete (2026-07-29):** schemas for the whole pipeline · `runAgent`
+(validation, capped retry, schema-derived prompts, plus an optional post-schema `validate`
+hook for business rules like provenance) · all four Phase 0 agents (Intake 10/10, Guide
+3/3, Itinerary 3/3, Critic 3/3 evals — Writer is Phase 1) · `checks/feasibility.ts`
+(budget, day feasibility, terrain-tiered transit-time estimate) · `tools/currency.ts`,
+`tools/places.ts`, `tools/geocode.ts`, `tools/elevation.ts`, `tools/dates.ts` ·
+`orchestrator.ts` (progress events, capped Guide fan-out, the Itinerary/Critic revision loop)
 
-**Phase 0, in order:**
+**Phase 0, in order — all done:**
 1. ~~`PlaceCandidate` schema + `estimated` flags on `ActivitySchema`~~ — done.
 2. ~~`tools/places.ts` — Overpass wrapper~~ — done, plus `tools/geocode.ts` (Nominatim:
    bbox/centre/country) which turned out to be a prerequisite.
 3. ~~Guide agent~~ — done, 3/3 evals.
-4. **Itinerary and Critic** ← next — build as a pair; they only make sense together.
-5. `orchestrator.ts` — last, once the agents it coordinates each pass their evals.
+4. ~~Itinerary and Critic~~ — done, 3/3 evals each, built as a pair.
+5. ~~`orchestrator.ts`~~ — done: Intake -> Guide (parallel, capped) -> Itinerary <-> Critic
+   (capped revision loop, `infeasible` applied here — never the Critic's own call).
 
-**Phase 0 is done when** `npm run dev -- "4 days in Meghalaya, BDT 45,000"` produces a
-feasible **validated `Itinerary` JSON object, pretty-printed by the CLI**, with estimated
-values correctly marked. Writer's prose formatting is Phase 1 — see the Pipeline section
-above.
+**Phase 0 is done** — verified via the actual command:
+`npm run dev -- "4 days in Meghalaya, BDT 45,000"` produces a feasible **validated
+`Itinerary` JSON object, pretty-printed by the CLI**, with estimated values correctly
+marked (real OSM places throughout, provisional dates landing outside the monsoon window,
+lodging/flights correctly null with `estimated_total_complete` surfaced rather than a false
+pass). Writer's prose formatting is Phase 1 — see the Pipeline section above. Next: Phase 1
+(Neon persistence, React frontend + SSE, Writer agent).
 
-**Stubs:** `src/agents/{itinerary,critic}.ts` are placeholders. `src/agents/research.ts`
-is no longer a stub — it's the Guide agent (the filename is a holdover; see the file's
-own header comment).
+**Stubs:** none. `src/agents/research.ts` is the Guide agent (filename is a holdover; see
+the file's own header comment).
 
 ## Things not to do
 

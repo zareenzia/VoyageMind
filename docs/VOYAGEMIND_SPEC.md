@@ -464,7 +464,7 @@ key with a spend cap.
 
 # 11. Phases
 
-### Phase 0 — Walking skeleton ← YOU ARE HERE
+### Phase 0 — Walking skeleton ✅ COMPLETE (2026-07-29)
 One vertical slice, working end to end, for one hardcoded destination type.
 
 Four agents, not five — Writer is Phase 1 (decided 2026-07-28, see §7.1). Phase 0's
@@ -478,15 +478,20 @@ formatting step until there's a frontend for Writer to format for.
 - [x] Currency tool
 - [x] Places tool — real API, real data (Overpass, geocode.ts for bbox/centre/country)
 - [x] Guide Agent, 3/3 evals
-- [ ] **Itinerary Agent** ← next, built as a pair with Critic
-- [ ] Critic Agent
-- [ ] Orchestrator wiring Intake, Guide, Itinerary, and Critic together
-- [ ] CLI produces a real, feasible 4-day Meghalaya itinerary as validated JSON
+- [x] Itinerary Agent, 3/3 evals (built as a pair with Critic)
+- [x] Critic Agent, 3/3 evals
+- [x] Orchestrator wiring Intake, Guide, Itinerary, and Critic together — progress events,
+      capped Guide fan-out, capped revision loop with `infeasible` applied in the
+      orchestrator, never the Critic's own call
+- [x] CLI produces a real, feasible 4-day Meghalaya itinerary as validated JSON
 
 **Done when:** Story 1 works from the command line, printing validated `Itinerary` JSON.
-No UI, no database, no auth, no prose formatting.
+No UI, no database, no auth, no prose formatting. **Verified**: `npm run dev -- "4 days in
+Meghalaya, BDT 45,000"` produces a `pass`-verdict itinerary built entirely from real OSM
+places, with provisional dates correctly landing outside the monsoon window and
+lodging/flights correctly `null` rather than guessed.
 
-### Phase 1 — Product
+### Phase 1 — Product ← YOU ARE HERE
 - Neon Postgres persistence, trip versions, migrations
 - React frontend, streaming progress
 - **Writer Agent** — `Itinerary` → user-facing plan, built alongside the frontend it renders
