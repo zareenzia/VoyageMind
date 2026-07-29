@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { runIntake } from "../src/agents/intake.js";
 import { runGuide } from "../src/agents/research.js";
+import { runItinerary } from "../src/agents/itinerary.js";
 
 /**
  * Property-based evals, across every agent. We assert properties of the output,
@@ -17,7 +18,11 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 interface Case {
   id: string;
-  expect: Record<string, unknown>;
+  expect?: Record<string, unknown>;
+  /** Some failure modes are correctly a thrown error, not a returned value —
+   * e.g. Itinerary given a brief with no known trip length. Set this instead of
+   * `expect` to assert the call throws (optionally checking the message). */
+  expectThrow?: { message_includes?: string };
   why: string;
   [input: string]: unknown;
 }
@@ -26,6 +31,7 @@ interface Case {
 const SUITES: Record<string, { run: (input: Record<string, unknown>) => Promise<unknown> }> = {
   intake: { run: (input) => runIntake(input as unknown as Parameters<typeof runIntake>[0]) },
   guide: { run: (input) => runGuide(input as unknown as Parameters<typeof runGuide>[0]) },
+  itinerary: { run: (input) => runItinerary(input as unknown as Parameters<typeof runItinerary>[0]) },
 };
 
 function get(obj: unknown, path: string): unknown {
@@ -116,10 +122,17 @@ async function main() {
     for (const testCase of selected) {
       total++;
       process.stdout.write(`  [${suiteName}] ${testCase.id} ... `);
-      const { id, expect, why, ...input } = testCase;
+      const { id, expect, expectThrow, why, ...input } = testCase;
       try {
         const output = await suite.run(input);
-        const problems = Object.entries(expect)
+
+        if (expectThrow) {
+          console.log("FAIL");
+          failures.push(`[${suiteName}] ${id}\n    expected a thrown error, got a result\n    why: ${why}`);
+          continue;
+        }
+
+        const problems = Object.entries(expect ?? {})
           .map(([key, expectedValue]) => assertExpectation(output, key, expectedValue))
           .filter((p): p is string => p !== null);
 
@@ -131,8 +144,23 @@ async function main() {
           failures.push(`[${suiteName}] ${id}\n    ${problems.join("\n    ")}\n    why: ${why}`);
         }
       } catch (error) {
-        console.log("ERROR");
-        failures.push(`[${suiteName}] ${id}\n    ${(error as Error).message}`);
+        const message = (error as Error).message;
+        if (expectThrow) {
+          const missing = expectThrow.message_includes && !message.includes(expectThrow.message_includes);
+          if (missing) {
+            console.log("FAIL");
+            failures.push(
+              `[${suiteName}] ${id}\n    threw, but message didn't include ` +
+                `"${expectThrow.message_includes}": ${message}\n    why: ${why}`,
+            );
+          } else {
+            console.log("pass");
+            passed++;
+          }
+        } else {
+          console.log("ERROR");
+          failures.push(`[${suiteName}] ${id}\n    ${message}`);
+        }
       }
     }
   }

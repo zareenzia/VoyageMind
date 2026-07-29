@@ -1,0 +1,197 @@
+[
+  {
+    "id": "meghalaya-happy-path-provisional-dates",
+    "brief": {
+      "origin": "Dhaka",
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": 3,
+      "flexible_dates": true,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": 45000,
+      "budget_currency": "BDT",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": ["waterfalls", "nature", "photography"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "destinations": [
+      {
+        "name": "Meghalaya",
+        "country": "India",
+        "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+        "why_it_fits": "Waterfalls, living root bridges, and dramatic plateau scenery match the stated interests.",
+        "best_months": [10, 11, 12, 1, 2, 3],
+        "activities": [
+          {
+            "id": "nohkalikai-falls", "name": "Nohkalikai Falls",
+            "location": { "lat": 25.2756548, "lng": 91.6865847 }, "address": null,
+            "category": "waterfall", "duration_minutes": 90, "cost_usd_per_person": 2,
+            "opens": "06:00", "closes": "18:00", "closed_days": [], "booking_required": false,
+            "notes": "India's tallest plunge waterfall.", "osm_type": "node", "osm_id": 3933644720,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "wei-sawdong", "name": "Wei Sawdong",
+            "location": { "lat": 25.2915126, "lng": 91.6781804 }, "address": null,
+            "category": "attraction", "duration_minutes": 75, "cost_usd_per_person": 1,
+            "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+            "notes": "Three-tiered waterfall, short hike to viewpoint.", "osm_type": "way", "osm_id": 554672508,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "double-decker-bridge", "name": "Double decker root bridge",
+            "location": { "lat": 25.2514562, "lng": 91.6716581 }, "address": null,
+            "category": "attraction", "duration_minutes": 240, "cost_usd_per_person": 3,
+            "opens": "07:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+            "notes": "Multi-hour trek down and back up thousands of steps.", "osm_type": "way", "osm_id": 554749520,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "long-root-bridge", "name": "Long root bridge",
+            "location": { "lat": 25.2489294, "lng": 91.6799472 }, "address": null,
+            "category": "attraction", "duration_minutes": 60, "cost_usd_per_person": 1,
+            "opens": "07:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+            "notes": null, "osm_type": "way", "osm_id": 366116299,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "blue-lagoon", "name": "Blue Lagoon",
+            "location": { "lat": 25.250652, "lng": 91.673789 }, "address": null,
+            "category": "attraction", "duration_minutes": 60, "cost_usd_per_person": 0,
+            "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+            "notes": "Swimming spot.", "osm_type": "way", "osm_id": 554672537,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "sohra-viewpoint", "name": "Sohra (Cherrapunji)",
+            "location": { "lat": 25.2777336, "lng": 91.7292416 }, "address": null,
+            "category": "attraction", "duration_minutes": 45, "cost_usd_per_person": 0,
+            "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+            "notes": "Town centre and viewpoints.", "osm_type": "node", "osm_id": 245731299,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "mawlynnong", "name": "Mawlynnong",
+            "location": { "lat": 25.2019507, "lng": 91.9155148 }, "address": null,
+            "category": "attraction", "duration_minutes": 120, "cost_usd_per_person": 1,
+            "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+            "notes": "Known as Asia's cleanest village.", "osm_type": "node", "osm_id": 3178190161,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          }
+        ]
+      }
+    ],
+    "today": "2026-07-29",
+    "expect": {
+      "days_min": 4,
+      "days_max": 4,
+      "dates_provisional": true,
+      "days.0.stops_min": 1
+    },
+    "why": "Story 1's headline example: 4 days (3 nights), no dates given. Must produce exactly 4 days and mark dates_provisional true rather than silently picking dates or leaving DayPlan.date unresolved."
+  },
+  {
+    "id": "no-known-trip-length-adversarial",
+    "brief": {
+      "origin": null,
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": null,
+      "flexible_dates": true,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": [],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": ["How many days/nights is the trip?"]
+    },
+    "destinations": [
+      {
+        "name": "Meghalaya",
+        "country": "India",
+        "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+        "why_it_fits": "test",
+        "best_months": [10, 11],
+        "activities": []
+      }
+    ],
+    "today": "2026-07-29",
+    "expectThrow": { "message_includes": "nights" },
+    "why": "brief.nights is null — inventing a trip length (even a 'reasonable default') is fabricating a fact Intake should have caught, not estimating one. Must throw clearly, not guess."
+  },
+  {
+    "id": "real-dates-given-not-provisional",
+    "brief": {
+      "origin": null,
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "start_date": "2026-12-01",
+      "end_date": "2026-12-03",
+      "nights": 2,
+      "flexible_dates": false,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "relaxed",
+      "interests": ["nature"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "destinations": [
+      {
+        "name": "Meghalaya",
+        "country": "India",
+        "centre": { "lat": 25.5379432, "lng": 91.2999102 },
+        "why_it_fits": "test",
+        "best_months": [10, 11, 12, 1, 2, 3],
+        "activities": [
+          {
+            "id": "nohkalikai-falls", "name": "Nohkalikai Falls",
+            "location": { "lat": 25.2756548, "lng": 91.6865847 }, "address": null,
+            "category": "waterfall", "duration_minutes": 90, "cost_usd_per_person": 2,
+            "opens": "06:00", "closes": "18:00", "closed_days": [], "booking_required": false,
+            "notes": null, "osm_type": "node", "osm_id": 3933644720,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          },
+          {
+            "id": "sohra-viewpoint", "name": "Sohra (Cherrapunji)",
+            "location": { "lat": 25.2777336, "lng": 91.7292416 }, "address": null,
+            "category": "attraction", "duration_minutes": 45, "cost_usd_per_person": 0,
+            "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+            "notes": null, "osm_type": "node", "osm_id": 245731299,
+            "estimated": { "duration": true, "cost": true, "hours": true }
+          }
+        ]
+      }
+    ],
+    "today": "2026-07-29",
+    "expect": {
+      "days_min": 3,
+      "days_max": 3,
+      "dates_provisional": false,
+      "days.0.date": "2026-12-01"
+    },
+    "why": "When brief.start_date is given, it must be used as-is — no provisional-date machinery, and the first day's date must match it exactly."
+  }
+]

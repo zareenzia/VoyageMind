@@ -11,7 +11,7 @@
 
 const ALL_MONTHS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
-function addDaysIso(dateIso: string, days: number): string {
+export function addDays(dateIso: string, days: number): string {
   const d = new Date(`${dateIso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
@@ -51,7 +51,7 @@ export function pickProvisionalDates(
     }
   }
 
-  return { start_date: startDate, end_date: addDaysIso(startDate, nights) };
+  return { start_date: startDate, end_date: addDays(startDate, nights) };
 }
 
 export interface CombinedBestMonths {
