@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`trip payload schema stability > CritiqueResultSchema structural shape matches the last acknowledged version 1`] = `"da5fd5c0bb431b09b208cf3b607a8a1ac4ba7c6dd778da604776f978261d4296"`;
+
+exports[`trip payload schema stability > DestinationSchema (array) structural shape matches the last acknowledged version 1`] = `"ddbd2b10926d27c56e390aeedef56ff08798cb7cdcc4c4549e268f07a710a57b"`;
+
+exports[`trip payload schema stability > ItinerarySchema structural shape matches the last acknowledged version 1`] = `"8110c8280a1d259d12f68aa49bf6fe4936b800f5beba964382870106a9d9adf7"`;
+
+exports[`trip payload schema stability > TripBriefSchema structural shape matches the last acknowledged version 1`] = `"6882e506d94cd0987dddaefee997a2721882da409648c890b23182d818ddd5a2"`;

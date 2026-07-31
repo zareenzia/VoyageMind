@@ -480,6 +480,16 @@ export const CritiqueJudgmentSchema = CritiqueResultSchema.omit({
 });
 export type CritiqueJudgment = z.infer<typeof CritiqueJudgmentSchema>;
 
+/**
+ * Bump by hand whenever TripBriefSchema, DestinationSchema, ItinerarySchema, or
+ * CritiqueResultSchema changes in a way that could break parsing a row written
+ * under the previous shape — a renamed/removed/retyped field, not a `.describe()`
+ * edit. src/schemas/trip-schema-version.test.ts hashes the structural JSON Schema
+ * of those four (descriptions stripped) and fails the build if the hash moves
+ * without this constant moving too, so a missed bump can't ship silently.
+ */
+export const TRIP_SCHEMA_VERSION = 1;
+
 export const PipelineStageSchema = z.enum(["intake", "guide", "itinerary", "critic"]);
 export type PipelineStage = z.infer<typeof PipelineStageSchema>;
 
