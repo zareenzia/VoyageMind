@@ -532,7 +532,7 @@ export const RunSucceededEventSchema = RunEventBaseSchema.extend({
 export const RunBlockedEventSchema = RunEventBaseSchema.extend({
   kind: z.literal("run_blocked"),
   message: z.string(),
-  open_questions: z.array(z.string()).min(1),
+  open_questions: z.array(z.string()),
 });
 
 export const RunFailedEventSchema = RunEventBaseSchema.extend({

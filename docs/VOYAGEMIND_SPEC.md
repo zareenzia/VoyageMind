@@ -499,6 +499,12 @@ lodging/flights correctly `null` rather than guessed.
 - Auth and user accounts
 - Trip CRUD, save, revisit
 
+**Phase 1 HTTP/SSE shape (decided 2026-07-31):**
+- `POST /runs` with JSON body creates a run and returns `{ "run_id": "<uuid>" }`.
+- `GET /runs/:run_id/events` is the SSE subscription endpoint.
+- This split is required because browser `EventSource` can only issue GET requests (no request
+  body) and automatic reconnection with `Last-Event-ID` is part of the contract.
+
 ### Phase 2 — Intelligence
 - RAG over destination guides via pgvector
 - `TravellerProfile` long-term memory feeding Intake and Guide
@@ -526,6 +532,8 @@ Written down so they stop being tempting.
 - **Mobile apps.** Responsive web only.
 - **Multi-provider AI abstraction.** One provider. Swap later if needed; do not abstract now.
 - **Microservices before Phase 3.** See D4.
+- **Treating `run_id` as strong auth.** In Phase 1, run_id is only an opaque correlation key for
+  a single run stream, not a durable account credential.
 
 ---
 

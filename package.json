@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "tsx --env-file=.env src/index.ts",
+    "server": "tsx --env-file=.env src/server.ts",
     "test": "vitest run",
     "eval": "tsx --env-file=.env evals/run.ts",
     "typecheck": "tsc --noEmit"

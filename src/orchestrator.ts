@@ -22,6 +22,8 @@ export interface ProgressEvent {
   stage: "intake" | "guide" | "itinerary" | "critic";
   status: "started" | "completed" | "failed";
   message: string;
+  destination?: string;
+  revisionRound?: number;
 }
 
 /** The brief itself says the pipeline can't proceed (no destination, no trip
@@ -148,12 +150,28 @@ async function runPipelineInternal(
   const destinationResults = await mapWithConcurrency(
     brief.destinations,
     LIMITS.maxParallelResearch,
-    (name) => researchDestination(brief, name),
+    async (name) => {
+      emit({
+        stage: "guide",
+        status: "started",
+        message: `Researching destination "${name}"...`,
+        destination: name,
+      });
+      const researched = await researchDestination(brief, name);
+      emit({
+        stage: "guide",
+        status: "completed",
+        message: `Finished destination "${name}".`,
+        destination: name,
+      });
+      return researched;
+    },
     (name, _i, error) => {
       emit({
         stage: "guide",
         status: "failed",
         message: `Could not research "${name}": ${(error as Error).message}`,
+        destination: name,
       });
     },
   );
@@ -169,9 +187,14 @@ async function runPipelineInternal(
     message: `Researched ${destinations.length}/${brief.destinations.length} destination(s).`,
   });
 
-  emit({ stage: "itinerary", status: "started", message: "Building the itinerary..." });
+  emit({ stage: "itinerary", status: "started", message: "Building the itinerary...", revisionRound: 0 });
   let itinerary = await runItinerary({ brief, destinations, today });
-  emit({ stage: "itinerary", status: "completed", message: itinerary.brief_summary });
+  emit({
+    stage: "itinerary",
+    status: "completed",
+    message: itinerary.brief_summary,
+    revisionRound: 0,
+  });
 
   let revisionsUsed = 0;
   let critique: CritiqueResult;
@@ -180,12 +203,14 @@ async function runPipelineInternal(
       stage: "critic",
       status: "started",
       message: `Reviewing (${revisionsUsed} revision(s) used so far)...`,
+      revisionRound: revisionsUsed,
     });
     critique = await runCritic({ itinerary, brief });
     emit({
       stage: "critic",
       status: "completed",
       message: `Verdict: ${critique.verdict} (${critique.hard_failures.length} hard failure(s)).`,
+      revisionRound: revisionsUsed,
     });
 
     const decision = decideNextStep(critique, revisionsUsed);
@@ -197,6 +222,7 @@ async function runPipelineInternal(
       stage: "itinerary",
       status: "started",
       message: `Revising (round ${revisionsUsed})...`,
+      revisionRound: revisionsUsed,
     });
     itinerary = await runItinerary({
       brief,
@@ -204,7 +230,12 @@ async function runPipelineInternal(
       today,
       revision: { previousItinerary: itinerary, critique },
     });
-    emit({ stage: "itinerary", status: "completed", message: itinerary.brief_summary });
+    emit({
+      stage: "itinerary",
+      status: "completed",
+      message: itinerary.brief_summary,
+      revisionRound: revisionsUsed,
+    });
   }
 
   return { brief, destinations, itinerary, critique, revisionsUsed };
