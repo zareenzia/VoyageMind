@@ -207,6 +207,19 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  // Lightweight existence check — used by the client to distinguish
+  // "run gone" (404) from "transient network issue" on EventSource error.
+  const existsMatch = url.pathname.match(/^\/runs\/([0-9a-fA-F-]{36})$/);
+  if (req.method === "GET" && existsMatch) {
+    const runId = existsMatch[1];
+    if (runId && runStore.runExists(runId)) {
+      writeJson(res, 200, { run_id: runId, exists: true });
+    } else {
+      writeJson(res, 404, { error: "Unknown run_id" });
+    }
+    return;
+  }
+
   writeJson(res, 404, { error: "Not found" });
 });
 

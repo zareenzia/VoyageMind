@@ -20,7 +20,7 @@ interface RunProgress {
   startedAt: number | null;
 }
 
-type TerminalKind = "run_succeeded" | "run_infeasible" | "run_blocked" | "run_failed" | "connection_lost";
+type TerminalKind = "run_succeeded" | "run_infeasible" | "run_blocked" | "run_failed" | "connection_lost" | "run_expired";
 
 interface RunTerminal {
   kind: TerminalKind;
@@ -59,6 +59,7 @@ type RunAction =
   | { type: "event"; event: RunEvent }
   | { type: "reconnecting" }
   | { type: "connection_lost" }
+  | { type: "run_expired" }
   | { type: "reset" };
 
 function reduceProgress(progress: RunProgress, event: RunEvent): RunProgress {
@@ -122,6 +123,9 @@ function runReducer(state: RunState, action: RunAction): RunState {
     case "connection_lost":
       return { ...state, phase: "terminal", terminal: { kind: "connection_lost", event: null } };
 
+    case "run_expired":
+      return { ...state, phase: "terminal", terminal: { kind: "run_expired", event: null } };
+
     case "reset":
       return INITIAL_STATE;
   }
@@ -129,20 +133,37 @@ function runReducer(state: RunState, action: RunAction): RunState {
 
 // --- Hook ---
 
-const WATCHDOG_TIMEOUT_MS = 45_000;
+const WATCHDOG_TIMEOUT_MS = 180_000; // Must exceed longest realistic stage gap (~73s observed)
 
 export function useRun() {
   const [state, dispatch] = useReducer(runReducer, INITIAL_STATE);
   const esRef = useRef<EventSource | null>(null);
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const runIdRef = useRef<string | null>(null);
 
   const resetWatchdog = useCallback(() => {
     if (watchdogRef.current) clearTimeout(watchdogRef.current);
     watchdogRef.current = setTimeout(() => {
+      // Only escalate if EventSource is NOT open — an open connection means
+      // the stream is alive (server sends TCP-level pings the browser can't see).
+      if (esRef.current && esRef.current.readyState === EventSource.OPEN) {
+        // Connection is healthy, just a long gap — reset and wait more
+        resetWatchdog();
+        return;
+      }
       esRef.current?.close();
       esRef.current = null;
       dispatch({ type: "connection_lost" });
     }, WATCHDOG_TIMEOUT_MS);
+  }, []);
+
+  const checkRunExists = useCallback(async (runId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`/runs/${runId}`);
+      return res.ok;
+    } catch {
+      return true; // Network error — assume run may still exist, keep trying
+    }
   }, []);
 
   const subscribe = useCallback(
@@ -151,6 +172,7 @@ export function useRun() {
         esRef.current.close();
         esRef.current = null;
       }
+      runIdRef.current = runId;
 
       const es = new EventSource(`/runs/${runId}/events`);
       esRef.current = es;
@@ -188,12 +210,27 @@ export function useRun() {
 
       es.onerror = () => {
         if (state.phase === "terminal") return;
+
+        // readyState CLOSED means EventSource gave up permanently (e.g. 404 response).
+        // Check if the run still exists on the server.
+        if (es.readyState === EventSource.CLOSED) {
+          if (watchdogRef.current) clearTimeout(watchdogRef.current);
+          void checkRunExists(runId).then((exists) => {
+            if (!exists) {
+              dispatch({ type: "run_expired" });
+            } else {
+              dispatch({ type: "connection_lost" });
+            }
+          });
+          return;
+        }
+
+        // readyState CONNECTING means EventSource is auto-reconnecting with Last-Event-ID
         dispatch({ type: "reconnecting" });
-        // EventSource will auto-reconnect with Last-Event-ID
         resetWatchdog();
       };
     },
-    [resetWatchdog, state.phase],
+    [resetWatchdog, checkRunExists, state.phase],
   );
 
   const startRun = useCallback(

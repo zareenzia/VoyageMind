@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRun } from "./hooks/useRun.ts";
+import { Navbar } from "./components/Navbar.tsx";
+import { HeroSection } from "./components/HeroSection.tsx";
 import { RunRequestForm } from "./components/RunRequestForm.tsx";
-import { RunProgress } from "./components/RunProgress.tsx";
+import { RunProgress } from "./components/RunProgress2.tsx";
 import { TerminalPanel } from "./components/TerminalPanel.tsx";
+import { Footer } from "./components/Footer.tsx";
+import { WorkspaceLayout } from "./components/workspace/WorkspaceLayout.tsx";
 
 function getRunIdFromUrl(): string | null {
   const params = new URLSearchParams(window.location.search);
@@ -15,14 +19,24 @@ function setRunIdInUrl(runId: string) {
   window.history.pushState({}, "", url.toString());
 }
 
+function clearRunIdFromUrl() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("run");
+  window.history.pushState({}, "", url.toString());
+}
+
+type View = "home" | "planner";
+
 export function App() {
   const { state, startRun, rejoinRun } = useRun();
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<View>("home");
 
-  // On mount, check if there's a run_id in the URL to rejoin
+  // Rejoin run from URL on mount
   useEffect(() => {
     const existingRunId = getRunIdFromUrl();
     if (existingRunId && state.phase === "idle") {
+      setView("planner");
       rejoinRun(existingRunId);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -37,26 +51,83 @@ export function App() {
     }
   };
 
+  const handleStartPlan = () => {
+    setView("planner");
+    clearRunIdFromUrl();
+  };
+
+  const handleHome = () => {
+    if (state.phase === "idle") {
+      setView("home");
+      clearRunIdFromUrl();
+    }
+  };
+
+  const isRunning = state.phase === "running" || state.phase === "reconnecting" || state.phase === "terminal";
+
+  // Workspace view for succeeded/infeasible — full layout with sidebar, map, provenance
+  if (
+    state.phase === "terminal" &&
+    state.terminal &&
+    (state.terminal.kind === "run_succeeded" || state.terminal.kind === "run_infeasible") &&
+    state.terminal.event
+  ) {
+    return (
+      <WorkspaceLayout
+        event={state.terminal.event}
+        progress={state.progress}
+        onNewTrip={handleStartPlan}
+      />
+    );
+  }
+
+  // Standard layout for idle, running, and error terminal states
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">VoyageMind</h1>
+    <div className="flex min-h-screen flex-col bg-sand">
+      <Navbar onHome={handleHome} />
 
-        {state.phase === "idle" && (
-          <>
-            <RunRequestForm onSubmit={handleSubmit} />
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-          </>
+      <main className="flex-1">
+        {/* Hero + landing */}
+        {view === "home" && !isRunning && (
+          <div className="mx-auto max-w-5xl px-6">
+            <HeroSection onStartPlan={handleStartPlan} />
+          </div>
         )}
 
-        {(state.phase === "running" || state.phase === "reconnecting") && (
-          <RunProgress progress={state.progress} reconnecting={state.phase === "reconnecting"} />
-        )}
+        {/* Planning view */}
+        {(view === "planner" || isRunning) && (
+          <div className="mx-auto max-w-3xl px-6 py-10">
+            {state.phase === "idle" && (
+              <div className="animate-fade-up">
+                <div className="mb-8 text-center">
+                  <h2 className="font-heading text-3xl text-charcoal">Where to next?</h2>
+                  <p className="mt-2 text-sm text-clay">
+                    Describe your trip — destinations, duration, budget, interests. Be specific.
+                  </p>
+                </div>
+                <RunRequestForm onSubmit={handleSubmit} />
+                {error && (
+                  <div className="mt-4 animate-fade-up rounded-lg border border-terracotta/20 bg-terracotta/5 px-4 py-3 text-sm text-terracotta">
+                    {error}
+                  </div>
+                )}
+              </div>
+            )}
 
-        {state.phase === "terminal" && state.terminal && (
-          <TerminalPanel terminal={state.terminal} events={state.events} />
+            {(state.phase === "running" || state.phase === "reconnecting") && (
+              <RunProgress progress={state.progress} reconnecting={state.phase === "reconnecting"} />
+            )}
+
+            {/* Non-workspace terminal states: blocked, failed, expired, connection_lost */}
+            {state.phase === "terminal" && state.terminal &&
+              state.terminal.kind !== "run_succeeded" && state.terminal.kind !== "run_infeasible" && (
+              <TerminalPanel terminal={state.terminal} events={state.events} />
+            )}
+          </div>
         )}
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
