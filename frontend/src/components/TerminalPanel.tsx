@@ -1,4 +1,5 @@
 import type { RunEvent } from "@shared/schemas/index.ts";
+import { ItineraryView } from "./ItineraryView.tsx";
 
 interface Terminal {
   kind: "run_succeeded" | "run_infeasible" | "run_blocked" | "run_failed" | "connection_lost";
@@ -27,20 +28,25 @@ export function TerminalPanel({ terminal }: Props) {
 
 function SucceededView({ event }: { event: RunEvent }) {
   if (event.kind !== "run_succeeded") return null;
+  const { itinerary, critique, brief } = event.payload;
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-green-200 bg-green-50 p-4">
         <p className="font-medium text-green-800">Trip planned successfully</p>
-        <p className="mt-1 text-sm text-green-700">{event.payload.itinerary.brief_summary}</p>
       </div>
-      <ItineraryPlaceholder event={event} />
+      <ItineraryView
+        itinerary={itinerary}
+        critique={critique}
+        travellerCount={brief.travellers.count}
+        revisionsUsed={event.payload.revisions_used}
+      />
     </div>
   );
 }
 
 function InfeasibleView({ event }: { event: RunEvent }) {
   if (event.kind !== "run_infeasible") return null;
-  const { critique, itinerary } = event.payload;
+  const { critique, itinerary, brief } = event.payload;
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-amber-200 bg-amber-50 p-4">
@@ -67,6 +73,12 @@ function InfeasibleView({ event }: { event: RunEvent }) {
           </ul>
         </div>
       )}
+      <ItineraryView
+        itinerary={itinerary}
+        critique={critique}
+        travellerCount={brief.travellers.count}
+        revisionsUsed={event.payload.revisions_used}
+      />
     </div>
   );
 }
@@ -118,20 +130,6 @@ function ConnectionLostView() {
       <p className="font-medium text-gray-800">Connection lost</p>
       <p className="mt-1 text-sm text-gray-600">
         The connection to the server was lost and could not be restored. Please refresh the page to try again.
-      </p>
-    </div>
-  );
-}
-
-/** Placeholder — the full itinerary renderer replaces this in the next commit. */
-function ItineraryPlaceholder({ event }: { event: RunEvent }) {
-  if (event.kind !== "run_succeeded") return null;
-  const { itinerary, critique } = event.payload;
-  return (
-    <div className="space-y-2 text-sm text-gray-700">
-      <p className="font-medium">{itinerary.days.length} day(s) planned</p>
-      <p>
-        Verdict: {critique.verdict} · {event.payload.revisions_used} revision(s) used
       </p>
     </div>
   );
