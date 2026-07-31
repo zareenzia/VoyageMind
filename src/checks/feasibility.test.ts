@@ -239,7 +239,7 @@ describe("checkDay — existing hard failures still fire on ordinary (non-unknow
     expect(notes).toEqual([]);
   });
 
-  it("CLOSED_THAT_DAY / BEFORE_OPENING / AFTER_CLOSING / NEGATIVE_DURATION still fire", () => {
+  it("CLOSED_THAT_DAY / BEFORE_OPENING / AFTER_CLOSING / NEGATIVE_DURATION still fire when hours are sourced", () => {
     const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
     const day = makeDay([
       makeStop({
@@ -249,6 +249,7 @@ describe("checkDay — existing hard failures still fire on ordinary (non-unknow
           closed_days: [weekday],
           opens: "11:00",
           closes: "08:00", // end (09:00) is after this, so AFTER_CLOSING fires too
+          estimated: { duration: true, cost: true, hours: false },
         }),
       }),
     ]);
@@ -349,23 +350,100 @@ describe("checkDay — provisional dates downgrade CLOSED_THAT_DAY only, not the
     );
   });
 
-  it("still hard-fails CLOSED_THAT_DAY when dates are real (datesProvisional false/default)", () => {
+  it("still hard-fails CLOSED_THAT_DAY when dates are real and hours are sourced", () => {
     const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
-    const day = makeDay([makeStop({ activity: makeActivity({ closed_days: [weekday] }) })]);
+    const day = makeDay([makeStop({ activity: makeActivity({ closed_days: [weekday], estimated: { duration: true, cost: true, hours: false } }) })]);
     const { failures } = checkDay(day, limits);
     expect(failures.map((f) => f.code)).toContain("CLOSED_THAT_DAY");
   });
 
-  it("does not affect BEFORE_OPENING/AFTER_CLOSING, which depend on clock time, not weekday", () => {
+  it("does not affect BEFORE_OPENING/AFTER_CLOSING when hours are sourced, which depend on clock time, not weekday", () => {
     const day = makeDay([
       makeStop({
         start: "07:00",
         end: "08:00",
-        activity: makeActivity({ opens: "09:00" }),
+        activity: makeActivity({ opens: "09:00", estimated: { duration: true, cost: true, hours: false } }),
       }),
     ]);
     const { failures } = checkDay(day, limits, true);
     expect(failures.map((f) => f.code)).toContain("BEFORE_OPENING");
+  });
+});
+
+describe("checkDay — estimated hours downgrade BEFORE_OPENING/AFTER_CLOSING/CLOSED_THAT_DAY to notes", () => {
+  const limits = DEFAULT_LIMITS.relaxed;
+
+  it("downgrades BEFORE_OPENING to a note when hours are estimated", () => {
+    const day = makeDay([
+      makeStop({
+        start: "07:00",
+        end: "08:00",
+        activity: makeActivity({
+          name: "Dawn Temple",
+          opens: "09:00",
+          estimated: { duration: true, cost: true, hours: true },
+        }),
+      }),
+    ]);
+    const { failures, notes } = checkDay(day, limits);
+    expect(failures.map((f) => f.code)).not.toContain("BEFORE_OPENING");
+    expect(notes.some((n) => n.includes("Dawn Temple") && n.includes("estimated"))).toBe(true);
+  });
+
+  it("downgrades AFTER_CLOSING to a note when hours are estimated", () => {
+    const day = makeDay([
+      makeStop({
+        start: "20:00",
+        end: "22:00",
+        activity: makeActivity({
+          name: "Late Market",
+          closes: "21:00",
+          estimated: { duration: true, cost: true, hours: true },
+        }),
+      }),
+    ]);
+    const { failures, notes } = checkDay(day, limits);
+    expect(failures.map((f) => f.code)).not.toContain("AFTER_CLOSING");
+    expect(notes.some((n) => n.includes("Late Market") && n.includes("estimated"))).toBe(true);
+  });
+
+  it("downgrades CLOSED_THAT_DAY to a note when hours are estimated (even with real dates)", () => {
+    const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
+    const day = makeDay([
+      makeStop({
+        activity: makeActivity({
+          name: "Estimated-Hours Museum",
+          closed_days: [weekday],
+          estimated: { duration: true, cost: true, hours: true },
+        }),
+      }),
+    ]);
+    const { failures, notes } = checkDay(day, limits, false);
+    expect(failures.map((f) => f.code)).not.toContain("CLOSED_THAT_DAY");
+    expect(notes.some((n) => n.includes("Estimated-Hours Museum") && n.includes("estimated"))).toBe(
+      true,
+    );
+  });
+
+  it("still hard-fails all three when hours are sourced (estimated.hours === false)", () => {
+    const weekday = new Date("2026-07-27T00:00:00Z").getUTCDay();
+    const day = makeDay([
+      makeStop({
+        start: "07:00",
+        end: "22:00",
+        activity: makeActivity({
+          closed_days: [weekday],
+          opens: "09:00",
+          closes: "17:00",
+          estimated: { duration: true, cost: true, hours: false },
+        }),
+      }),
+    ]);
+    const { failures } = checkDay(day, limits);
+    const codes = failures.map((f) => f.code);
+    expect(codes).toContain("CLOSED_THAT_DAY");
+    expect(codes).toContain("BEFORE_OPENING");
+    expect(codes).toContain("AFTER_CLOSING");
   });
 });
 

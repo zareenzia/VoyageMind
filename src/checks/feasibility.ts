@@ -267,14 +267,17 @@ export function checkDay(day: DayPlan, limits: DayLimits, datesProvisional = fal
     // resolve "this Saturday" etc. against today); two weekday conventions in
     // one codebase is a bug waiting to happen.
     const weekday = new Date(`${day.date}T00:00:00Z`).getUTCDay();
+    const hoursEstimated = stop.activity.estimated.hours;
     if (stop.activity.closed_days.includes(weekday)) {
-      if (datesProvisional) {
-        // The weekday itself is notional — no date was given, so this isn't a
-        // verified conflict, just a possible one. Same treatment as
-        // transit_source: "unknown".
+      if (datesProvisional || hoursEstimated) {
+        // Either the weekday is notional (no date given) or the closed_days
+        // themselves are a model guess — either way, not a verified conflict.
+        const reason = datesProvisional
+          ? "the date is provisional (no date was given)"
+          : "closed_days are estimated, not sourced";
         notes.push(
-          `${day.date}: "${stop.activity.name}" may be closed on this weekday, but the date ` +
-            `is provisional (no date was given), so this could not be verified.`,
+          `${day.date}: "${stop.activity.name}" may be closed on this weekday, but ${reason}, ` +
+            `so this could not be verified.`,
         );
       } else {
         failures.push({
@@ -284,16 +287,30 @@ export function checkDay(day: DayPlan, limits: DayLimits, datesProvisional = fal
       }
     }
     if (stop.activity.opens && start < toMinutes(stop.activity.opens)) {
-      failures.push({
-        code: "BEFORE_OPENING",
-        message: `${day.date}: "${stop.activity.name}" scheduled at ${stop.start} but opens at ${stop.activity.opens}.`,
-      });
+      if (hoursEstimated) {
+        notes.push(
+          `${day.date}: "${stop.activity.name}" scheduled at ${stop.start} but estimated ` +
+            `opening is ${stop.activity.opens} — not verified (hours are estimated, not sourced).`,
+        );
+      } else {
+        failures.push({
+          code: "BEFORE_OPENING",
+          message: `${day.date}: "${stop.activity.name}" scheduled at ${stop.start} but opens at ${stop.activity.opens}.`,
+        });
+      }
     }
     if (stop.activity.closes && end > toMinutes(stop.activity.closes)) {
-      failures.push({
-        code: "AFTER_CLOSING",
-        message: `${day.date}: "${stop.activity.name}" runs to ${stop.end} but closes at ${stop.activity.closes}.`,
-      });
+      if (hoursEstimated) {
+        notes.push(
+          `${day.date}: "${stop.activity.name}" runs to ${stop.end} but estimated ` +
+            `closing is ${stop.activity.closes} — not verified (hours are estimated, not sourced).`,
+        );
+      } else {
+        failures.push({
+          code: "AFTER_CLOSING",
+          message: `${day.date}: "${stop.activity.name}" runs to ${stop.end} but closes at ${stop.activity.closes}.`,
+        });
+      }
     }
 
     transit += stop.transit_minutes_from_previous;
