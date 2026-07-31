@@ -221,6 +221,51 @@ test run and diverges between two machines), Supabase (a broader platform includ
 storage; a reasonable choice, but the extra surface is not needed while §12 rules out most of
 what it bundles).
 
+### D7 — Trip persistence: hybrid store, owner token, JSONB with a version gate (2026-07-31)
+
+**Decision:** Runs stay in-memory-only (`InMemoryRunStore`, unchanged) for SSE replay — that
+data is a connection-resilience mechanism, not something worth writing to Postgres. A separate
+`trips` table gets exactly one row, written after the terminal SSE event has already published,
+only for `run_succeeded`/`run_infeasible` — the two outcomes that carry a real `Itinerary`.
+`run_blocked` and `run_failed` never produce a row: there's no itinerary to store, and the
+client already has the message over SSE.
+
+Ownership is a client-generated anonymous token (localStorage), stored per trip and used only to
+filter a "my trips" list — it is not an access-control check. Any trip stays readable by id, the
+same as an unlisted URL; the token just lets the frontend ask "which of these are mine" without
+an accounts system. It migrates to real accounts later by attaching claimed tokens to a user row.
+
+Payloads (`brief`, `destinations`, `itinerary`, `critique`) are stored as JSONB rather than
+shredded into normalised tables — they're already Zod-validated and the schemas are still
+moving. A `schema_version` column (`TRIP_SCHEMA_VERSION`, `src/schemas/index.ts`) is stamped at
+write time. On read, a version mismatch — or a same-version parse failure, which means a schema
+changed without the constant being bumped — degrades to a read-only view instead of throwing:
+request text, destination names, date range, and day count (best-effort, independently-null
+fields via `extractLegacySummary`), plus a "saved under an older format" notice. Never the full
+timeline/map/provenance panel against unvalidated data. `TRIP_SCHEMA_VERSION` drifting silently
+is itself guarded: `src/schemas/trip-schema-version.test.ts` hashes the four stored schemas'
+structural JSON Schema (descriptions stripped) and fails the build if the hash moves without the
+constant moving too.
+
+**Why:** see CLAUDE.md rule 8/9 and `docs/PROJECT_LOG.md`. The three storage options considered
+("write every run event," "persist only the finished trip," "hybrid — in-memory events, one row
+on the terminal event") collapse to two once you notice only the terminal payload-bearing events
+carry anything worth keeping — writing every progress event is I/O for data thrown away in ten
+minutes, and it also puts a network round-trip on the SSE hot path. A server restart orphaning an
+in-flight run is a real cost, but it isn't fixed by any of the three options: fixing it means
+checkpointing the *orchestrator's* pipeline state, not the event log, which is out of scope here.
+
+**Follow-up (not built):** an abandoned-run sweep — mark any in-memory run with no terminal
+event after N minutes so a client fails cleanly instead of hanging on a dead connection after a
+restart. Code-only, no DB dependency; deferred because it's orthogonal to persistence.
+
+**A consequence worth stating plainly:** because the terminal SSE event carries the full payload
+inline, a failed trip save is invisible in the session that produced it — the user sees their
+itinerary exactly as normal, and only the "my trips" list is missing an entry. That's the
+correct degradation (a storage failure must never turn a successful run into a visible failure),
+but it means the failure is silent to the user by design, so the server logs it loudly
+(`console.error`, never the raw error's connection details) rather than swallowing it quietly.
+
 ---
 
 # 7. Agents and tools
