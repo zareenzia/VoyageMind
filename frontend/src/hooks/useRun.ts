@@ -1,0 +1,225 @@
+import { useCallback, useReducer, useRef } from "react";
+import { RunEventSchema, type RunEvent } from "@shared/schemas/index.ts";
+
+// --- State types ---
+
+type PipelineStage = "intake" | "guide" | "itinerary" | "critic";
+
+interface DestinationStatus {
+  name: string;
+  index: number;
+  status: "started" | "completed" | "failed";
+}
+
+interface RunProgress {
+  currentStage: PipelineStage | null;
+  stageStatuses: Record<PipelineStage, "pending" | "started" | "completed" | "failed">;
+  destinations: DestinationStatus[];
+  destinationTotal: number;
+  revisionRound: number;
+  startedAt: number | null;
+}
+
+type TerminalKind = "run_succeeded" | "run_infeasible" | "run_blocked" | "run_failed" | "connection_lost";
+
+interface RunTerminal {
+  kind: TerminalKind;
+  event: RunEvent | null;
+}
+
+export interface RunState {
+  phase: "idle" | "running" | "reconnecting" | "terminal";
+  runId: string | null;
+  events: RunEvent[];
+  progress: RunProgress;
+  terminal: RunTerminal | null;
+}
+
+const INITIAL_PROGRESS: RunProgress = {
+  currentStage: null,
+  stageStatuses: { intake: "pending", guide: "pending", itinerary: "pending", critic: "pending" },
+  destinations: [],
+  destinationTotal: 0,
+  revisionRound: 0,
+  startedAt: null,
+};
+
+const INITIAL_STATE: RunState = {
+  phase: "idle",
+  runId: null,
+  events: [],
+  progress: INITIAL_PROGRESS,
+  terminal: null,
+};
+
+// --- Reducer ---
+
+type RunAction =
+  | { type: "start"; runId: string }
+  | { type: "event"; event: RunEvent }
+  | { type: "reconnecting" }
+  | { type: "connection_lost" }
+  | { type: "reset" };
+
+function reduceProgress(progress: RunProgress, event: RunEvent): RunProgress {
+  switch (event.kind) {
+    case "run_started":
+      return { ...progress, startedAt: Date.parse(event.timestamp) };
+
+    case "stage_progress": {
+      const statuses = { ...progress.stageStatuses, [event.stage]: event.status };
+      return {
+        ...progress,
+        currentStage: event.status === "started" ? event.stage : progress.currentStage,
+        stageStatuses: statuses,
+        revisionRound: event.revision_round ?? progress.revisionRound,
+      };
+    }
+
+    case "destination_progress": {
+      const existing = progress.destinations.find((d) => d.name === event.destination);
+      const destinations = existing
+        ? progress.destinations.map((d) =>
+            d.name === event.destination ? { ...d, status: event.status } : d,
+          )
+        : [...progress.destinations, { name: event.destination, index: event.index, status: event.status }];
+      return { ...progress, destinations, destinationTotal: event.total };
+    }
+
+    case "revision_progress":
+      return { ...progress, revisionRound: event.round };
+
+    default:
+      return progress;
+  }
+}
+
+function runReducer(state: RunState, action: RunAction): RunState {
+  switch (action.type) {
+    case "start":
+      return { ...INITIAL_STATE, phase: "running", runId: action.runId };
+
+    case "event": {
+      const event = action.event;
+      const events = [...state.events, event];
+      const progress = reduceProgress(state.progress, event);
+
+      if (
+        event.kind === "run_succeeded" ||
+        event.kind === "run_infeasible" ||
+        event.kind === "run_blocked" ||
+        event.kind === "run_failed"
+      ) {
+        return { ...state, phase: "terminal", events, progress, terminal: { kind: event.kind, event } };
+      }
+
+      return { ...state, events, progress };
+    }
+
+    case "reconnecting":
+      return { ...state, phase: "reconnecting" };
+
+    case "connection_lost":
+      return { ...state, phase: "terminal", terminal: { kind: "connection_lost", event: null } };
+
+    case "reset":
+      return INITIAL_STATE;
+  }
+}
+
+// --- Hook ---
+
+const WATCHDOG_TIMEOUT_MS = 45_000;
+
+export function useRun() {
+  const [state, dispatch] = useReducer(runReducer, INITIAL_STATE);
+  const esRef = useRef<EventSource | null>(null);
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetWatchdog = useCallback(() => {
+    if (watchdogRef.current) clearTimeout(watchdogRef.current);
+    watchdogRef.current = setTimeout(() => {
+      esRef.current?.close();
+      esRef.current = null;
+      dispatch({ type: "connection_lost" });
+    }, WATCHDOG_TIMEOUT_MS);
+  }, []);
+
+  const subscribe = useCallback(
+    (runId: string) => {
+      if (esRef.current) {
+        esRef.current.close();
+        esRef.current = null;
+      }
+
+      const es = new EventSource(`/runs/${runId}/events`);
+      esRef.current = es;
+      resetWatchdog();
+
+      const handleEvent = (e: MessageEvent) => {
+        resetWatchdog();
+        try {
+          const parsed = RunEventSchema.parse(JSON.parse(e.data));
+          dispatch({ type: "event", event: parsed });
+
+          if (
+            parsed.kind === "run_succeeded" ||
+            parsed.kind === "run_infeasible" ||
+            parsed.kind === "run_blocked" ||
+            parsed.kind === "run_failed"
+          ) {
+            es.close();
+            esRef.current = null;
+            if (watchdogRef.current) clearTimeout(watchdogRef.current);
+          }
+        } catch {
+          // Malformed event — ignore, rely on watchdog
+        }
+      };
+
+      es.addEventListener("run_started", handleEvent);
+      es.addEventListener("stage_progress", handleEvent);
+      es.addEventListener("destination_progress", handleEvent);
+      es.addEventListener("revision_progress", handleEvent);
+      es.addEventListener("run_succeeded", handleEvent);
+      es.addEventListener("run_infeasible", handleEvent);
+      es.addEventListener("run_blocked", handleEvent);
+      es.addEventListener("run_failed", handleEvent);
+
+      es.onerror = () => {
+        if (state.phase === "terminal") return;
+        dispatch({ type: "reconnecting" });
+        // EventSource will auto-reconnect with Last-Event-ID
+        resetWatchdog();
+      };
+    },
+    [resetWatchdog, state.phase],
+  );
+
+  const startRun = useCallback(
+    async (request: string) => {
+      dispatch({ type: "reset" });
+      const res = await fetch("/runs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request }),
+      });
+      if (!res.ok) throw new Error(`POST /runs failed: ${res.status}`);
+      const { run_id } = (await res.json()) as { run_id: string };
+      dispatch({ type: "start", runId: run_id });
+      subscribe(run_id);
+      return run_id;
+    },
+    [subscribe],
+  );
+
+  const rejoinRun = useCallback(
+    (runId: string) => {
+      dispatch({ type: "start", runId });
+      subscribe(runId);
+    },
+    [subscribe],
+  );
+
+  return { state, startRun, rejoinRun };
+}
