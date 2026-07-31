@@ -27,6 +27,12 @@ export const LIMITS = {
   candidatesPerDestination: 40,
   /** Retain finished run events for SSE replay before evicting from memory. */
   runRetentionMinutes: 10,
-  /** Hard-stop in-memory run retention, even if terminal event never arrived. */
+  /** A non-terminal run with no event for this long is abandoned: the sweep
+   * emits a retryable run_failed so the client gets a real terminal state
+   * instead of an open stream. 5 min is comfortably above the longest
+   * realistic stage gap (~3 min for the Critic). */
+  runAbandonedMinutes: 5,
+  /** Hard-stop in-memory run retention, even if terminal event never arrived.
+   * Safety net only — the abandoned sweep should fire first. */
   runAbsoluteMaxMinutes: 30,
 } as const;

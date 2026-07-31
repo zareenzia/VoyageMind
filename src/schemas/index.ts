@@ -541,6 +541,7 @@ export const RunFailedEventSchema = RunEventBaseSchema.extend({
   kind: z.literal("run_failed"),
   stage: PipelineStageSchema.nullable(),
   message: z.string(),
+  retryable: z.boolean().optional(),
 });
 
 export const RunInfeasibleEventSchema = RunEventBaseSchema.extend({

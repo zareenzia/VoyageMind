@@ -94,7 +94,7 @@ export function makeRunBlockedEvent(context: EventContext, message: string, open
   });
 }
 
-export function makeRunFailedEvent(context: EventContext, stage: ProgressEvent["stage"] | null, message: string): RunEvent {
+export function makeRunFailedEvent(context: EventContext, stage: ProgressEvent["stage"] | null, message: string, retryable?: boolean): RunEvent {
   return RunEventSchema.parse({
     kind: "run_failed",
     run_id: context.runId,
@@ -102,5 +102,6 @@ export function makeRunFailedEvent(context: EventContext, stage: ProgressEvent["
     timestamp: nowIso(),
     stage,
     message,
+    ...(retryable !== undefined ? { retryable } : {}),
   });
 }

@@ -4,7 +4,13 @@ import { RunEventSchema, type RunEvent, type RunTerminalEvent } from "../schemas
 interface StoredRun {
   events: RunEvent[];
   createdAtMs: number;
+  lastEventAtMs: number;
   terminalAtMs: number | null;
+}
+
+export interface AbandonedRunInfo {
+  runId: string;
+  nextSeq: number;
 }
 
 export interface RunStore {
@@ -12,6 +18,7 @@ export interface RunStore {
   runExists(runId: string): boolean;
   appendEvent(runId: string, event: RunEvent): void;
   getEventsAfter(runId: string, lastSeenSeq: number): RunEvent[];
+  getAbandonedRuns(nowMs?: number): AbandonedRunInfo[];
   sweepExpired(nowMs?: number): number;
 }
 
@@ -30,7 +37,8 @@ export class InMemoryRunStore implements RunStore {
     if (this.runs.has(runId)) {
       throw new Error(`Run already exists: ${runId}`);
     }
-    this.runs.set(runId, { events: [], createdAtMs: Date.now(), terminalAtMs: null });
+    const nowMs = Date.now();
+    this.runs.set(runId, { events: [], createdAtMs: nowMs, lastEventAtMs: nowMs, terminalAtMs: null });
   }
 
   runExists(runId: string): boolean {
@@ -55,6 +63,7 @@ export class InMemoryRunStore implements RunStore {
     }
 
     run.events.push(parsed);
+    run.lastEventAtMs = eventTimeMs(parsed);
     if (isTerminalEvent(parsed)) {
       run.terminalAtMs = eventTimeMs(parsed);
     }
@@ -64,6 +73,19 @@ export class InMemoryRunStore implements RunStore {
     const run = this.runs.get(runId);
     if (!run) return [];
     return run.events.filter((event) => event.seq > lastSeenSeq);
+  }
+
+  getAbandonedRuns(nowMs: number = Date.now()): AbandonedRunInfo[] {
+    const abandonedMs = LIMITS.runAbandonedMinutes * 60_000;
+    const result: AbandonedRunInfo[] = [];
+    for (const [runId, run] of this.runs.entries()) {
+      if (run.terminalAtMs !== null) continue;
+      if (run.events.length === 0) continue;
+      if (nowMs - run.lastEventAtMs >= abandonedMs) {
+        result.push({ runId, nextSeq: run.events.length });
+      }
+    }
+    return result;
   }
 
   sweepExpired(nowMs: number = Date.now()): number {

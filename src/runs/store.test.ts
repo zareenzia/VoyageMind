@@ -113,4 +113,78 @@ describe("InMemoryRunStore", () => {
       Date.now = originalNow;
     }
   });
+
+  it("identifies abandoned non-terminal runs based on time since last event", () => {
+    const originalNow = Date.now;
+    let nowMs = Date.parse("2026-07-31T00:00:00.000Z");
+    Date.now = () => nowMs;
+
+    try {
+      const store = new InMemoryRunStore();
+      store.createRun(RUN_ID);
+      store.appendEvent(RUN_ID, startedEvent(0));
+      store.appendEvent(RUN_ID, stageEvent(1));
+
+      // 4 minutes later — not yet abandoned
+      nowMs = Date.parse("2026-07-31T00:04:00.000Z");
+      expect(store.getAbandonedRuns()).toEqual([]);
+
+      // 5 minutes after the last event — now abandoned
+      nowMs = Date.parse("2026-07-31T00:05:00.000Z");
+      const abandoned = store.getAbandonedRuns();
+      expect(abandoned).toHaveLength(1);
+      expect(abandoned[0]?.runId).toBe(RUN_ID);
+      expect(abandoned[0]?.nextSeq).toBe(2);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
+  it("does not mark terminal runs as abandoned", () => {
+    const originalNow = Date.now;
+    let nowMs = Date.parse("2026-07-31T00:00:00.000Z");
+    Date.now = () => nowMs;
+
+    try {
+      const store = new InMemoryRunStore();
+      store.createRun(RUN_ID);
+      store.appendEvent(RUN_ID, startedEvent(0));
+      store.appendEvent(RUN_ID, terminalEvent(1));
+
+      // Well past the abandoned threshold, but already terminal
+      nowMs = Date.parse("2026-07-31T00:08:00.000Z");
+      expect(store.getAbandonedRuns()).toEqual([]);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
+  it("does not mark a run as abandoned if a recent event arrived", () => {
+    const originalNow = Date.now;
+    let nowMs = Date.parse("2026-07-31T00:00:00.000Z");
+    Date.now = () => nowMs;
+
+    try {
+      const store = new InMemoryRunStore();
+      store.createRun(RUN_ID);
+      store.appendEvent(RUN_ID, startedEvent(0));
+
+      // 4.5 min later, a new event arrives
+      nowMs = Date.parse("2026-07-31T00:04:30.000Z");
+      store.appendEvent(RUN_ID, {
+        ...stageEvent(1),
+        timestamp: "2026-07-31T00:04:30.000Z",
+      });
+
+      // 4 min after THAT event — not yet abandoned (only 4 min since last event)
+      nowMs = Date.parse("2026-07-31T00:08:30.000Z");
+      expect(store.getAbandonedRuns()).toEqual([]);
+
+      // 5 min after that event — now abandoned
+      nowMs = Date.parse("2026-07-31T00:09:30.000Z");
+      expect(store.getAbandonedRuns()).toHaveLength(1);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
 });

@@ -224,6 +224,17 @@ const server = createServer(async (req, res) => {
 });
 
 setInterval(() => {
+  for (const { runId, nextSeq } of runStore.getAbandonedRuns()) {
+    appendAndPublish(
+      runId,
+      makeRunFailedEvent(
+        { runId, nextSeq },
+        null,
+        "Run abandoned: no progress for " + LIMITS.runAbandonedMinutes + " minutes. You can retry the request.",
+        true,
+      ),
+    );
+  }
   runStore.sweepExpired();
 }, SWEEP_MS);
 
