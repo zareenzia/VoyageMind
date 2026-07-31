@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { URL } from "node:url";
 import { z } from "zod";
 import { LIMITS } from "./config.js";
-import { PipelineBlockedError, runPipeline, type ProgressEvent } from "./orchestrator.js";
+import { PipelineBlockedError, runPipeline, type PipelineResult, type ProgressEvent } from "./orchestrator.js";
 import {
   makeRunBlockedEvent,
   makeRunFailedEvent,
@@ -12,8 +12,9 @@ import {
   makeRunSucceededEvent,
   projectProgressEvent,
 } from "./http/run-events.js";
-import type { RunEvent } from "./schemas/index.js";
+import { TRIP_SCHEMA_VERSION, type RunEvent } from "./schemas/index.js";
 import { InMemoryRunStore } from "./runs/store.js";
+import { NeonTripStore } from "./trips/neon-store.js";
 
 const PORT = Number(process.env.PORT ?? "8787");
 const HEARTBEAT_MS = 15_000;
@@ -22,10 +23,48 @@ const SWEEP_MS = 60_000;
 const CreateRunBodySchema = z.object({
   request: z.string().min(1),
   today: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // Anonymous, client-generated (localStorage) — filters "my trips", never an
+  // access check. See docs/VOYAGEMIND_SPEC.md D7.
+  owner_token: z.string().min(1),
 });
 
 const runStore = new InMemoryRunStore();
+const tripStore = new NeonTripStore();
 const subscribers = new Map<string, Set<(event: RunEvent) => void>>();
+
+/**
+ * Only run_succeeded/run_infeasible reach here — the two terminal kinds that
+ * carry a payload with a real Itinerary (see server's startRun). A storage
+ * failure must never affect the run the client already saw over SSE: it's
+ * caught here, not rethrown, so the only consequence is a missing "my trips"
+ * entry — which is otherwise silent, hence logging loudly.
+ */
+async function persistTrip(
+  runId: string,
+  ownerToken: string,
+  request: string,
+  status: "succeeded" | "infeasible",
+  pipelineResult: PipelineResult,
+): Promise<void> {
+  try {
+    await tripStore.saveTrip({
+      id: runId,
+      ownerToken,
+      status,
+      schemaVersion: TRIP_SCHEMA_VERSION,
+      request,
+      brief: pipelineResult.brief,
+      destinations: pipelineResult.destinations,
+      itinerary: pipelineResult.itinerary,
+      critique: pipelineResult.critique,
+      revisionsUsed: pipelineResult.revisionsUsed,
+    });
+  } catch (error) {
+    console.error(
+      `[trips] failed to persist trip ${runId}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
 
 function isTerminal(event: RunEvent): boolean {
   return event.kind === "run_succeeded" || event.kind === "run_blocked" || event.kind === "run_failed" || event.kind === "run_infeasible";
@@ -76,7 +115,7 @@ function parseLastEventId(header: string | string[] | undefined): number {
   return Number.isInteger(parsed) ? parsed : -1;
 }
 
-function startRun(runId: string, request: string, today: string): void {
+function startRun(runId: string, ownerToken: string, request: string, today: string): void {
   let nextSeq = 0;
   let latestStage: ProgressEvent["stage"] | null = null;
   let terminalEmitted = false;
@@ -99,8 +138,10 @@ function startRun(runId: string, request: string, today: string): void {
       const pipelineResult = await result;
       if (pipelineResult.critique.verdict === "infeasible") {
         appendAndPublish(runId, makeRunInfeasibleEvent({ runId, nextSeq: next() }, pipelineResult));
+        await persistTrip(runId, ownerToken, request, "infeasible", pipelineResult);
       } else {
         appendAndPublish(runId, makeRunSucceededEvent({ runId, nextSeq: next() }, pipelineResult));
+        await persistTrip(runId, ownerToken, request, "succeeded", pipelineResult);
       }
       terminalEmitted = true;
     } catch (error) {
@@ -141,7 +182,7 @@ const server = createServer(async (req, res) => {
       const runId = randomUUID();
       runStore.createRun(runId);
       const today = parsed.today ?? new Date().toISOString().slice(0, 10);
-      startRun(runId, parsed.request, today);
+      startRun(runId, parsed.owner_token, parsed.request, today);
       writeJson(res, 200, { run_id: runId });
       return;
     } catch (error) {
@@ -218,6 +259,62 @@ const server = createServer(async (req, res) => {
       writeJson(res, 404, { error: "Unknown run_id" });
     }
     return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/trips") {
+    const ownerToken = url.searchParams.get("owner_token");
+    if (!ownerToken) {
+      writeJson(res, 400, { error: "owner_token query parameter is required" });
+      return;
+    }
+    try {
+      const trips = await tripStore.listTripsForOwner(ownerToken);
+      writeJson(res, 200, { trips });
+    } catch (error) {
+      console.error(`[trips] failed to list trips: ${error instanceof Error ? error.message : String(error)}`);
+      writeJson(res, 502, { error: "Could not load trips right now." });
+    }
+    return;
+  }
+
+  const tripMatch = url.pathname.match(/^\/trips\/([0-9a-fA-F-]{36})$/);
+  if (tripMatch) {
+    const tripId = tripMatch[1]!;
+
+    if (req.method === "GET") {
+      try {
+        const result = await tripStore.getTrip(tripId);
+        if (!result) {
+          writeJson(res, 404, { error: "Unknown trip" });
+          return;
+        }
+        writeJson(res, 200, result);
+      } catch (error) {
+        console.error(`[trips] failed to read trip ${tripId}: ${error instanceof Error ? error.message : String(error)}`);
+        writeJson(res, 502, { error: "Could not load this trip right now." });
+      }
+      return;
+    }
+
+    if (req.method === "DELETE") {
+      const ownerToken = url.searchParams.get("owner_token");
+      if (!ownerToken) {
+        writeJson(res, 400, { error: "owner_token query parameter is required" });
+        return;
+      }
+      try {
+        const deleted = await tripStore.deleteTrip(tripId, ownerToken);
+        if (!deleted) {
+          writeJson(res, 404, { error: "Unknown trip, or owner_token did not match" });
+          return;
+        }
+        writeJson(res, 200, { deleted: true });
+      } catch (error) {
+        console.error(`[trips] failed to delete trip ${tripId}: ${error instanceof Error ? error.message : String(error)}`);
+        writeJson(res, 502, { error: "Could not delete this trip right now." });
+      }
+      return;
+    }
   }
 
   writeJson(res, 404, { error: "Not found" });

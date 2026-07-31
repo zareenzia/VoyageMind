@@ -1,12 +1,6 @@
 import { Pool } from "pg";
 import { toTripReadResult, type TripReadResult, type TripRecordInput, type TripStore, type TripSummary } from "./store.js";
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required environment variable: ${name}`);
-  return value;
-}
-
 function toIso(value: unknown): string {
   return value instanceof Date ? value.toISOString() : String(value);
 }
@@ -28,7 +22,19 @@ function toIso(value: unknown): string {
 export class NeonTripStore implements TripStore {
   private readonly pool: Pool;
 
-  constructor(connectionString: string = requireEnv("DATABASE_URL")) {
+  /**
+   * Deliberately does NOT throw when DATABASE_URL is unset: this store is
+   * constructed once at server.ts module scope, and a synchronous throw
+   * there would take down the entire process — including the run/SSE
+   * pipeline, which has nothing to do with trips — over a missing env var
+   * that only matters for persistence. Instead, a missing/bad connection
+   * string surfaces as a failed query the first time a trips operation
+   * actually runs, which every call site here already catches and logs
+   * (see persistTrip's try/catch in server.ts and the /trips route
+   * handlers) — a dev box with no Neon configured just never gets a "my
+   * trips" entry, exactly the degradation D7 describes.
+   */
+  constructor(connectionString: string | undefined = process.env.DATABASE_URL) {
     this.pool = new Pool({ connectionString });
   }
 

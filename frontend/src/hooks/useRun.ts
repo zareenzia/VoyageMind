@@ -1,5 +1,6 @@
 import { useCallback, useReducer, useRef } from "react";
 import { RunEventSchema, type RunEvent } from "@shared/schemas/index.ts";
+import { getOwnerToken } from "../lib/ownerToken.ts";
 
 // --- State types ---
 
@@ -239,7 +240,7 @@ export function useRun() {
       const res = await fetch("/runs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request }),
+        body: JSON.stringify({ request, owner_token: getOwnerToken() }),
       });
       if (!res.ok) throw new Error(`POST /runs failed: ${res.status}`);
       const { run_id } = (await res.json()) as { run_id: string };

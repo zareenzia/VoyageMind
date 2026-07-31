@@ -1,8 +1,11 @@
+import { MyTripsPanel } from "./MyTripsPanel.tsx";
+
 interface Props {
   onHome: () => void;
+  onSelectTrip: (id: string) => void;
 }
 
-export function Navbar({ onHome }: Props) {
+export function Navbar({ onHome, onSelectTrip }: Props) {
   return (
     <nav className="sticky top-0 z-50 border-b border-sand-dark/80 bg-sand/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
@@ -17,6 +20,8 @@ export function Navbar({ onHome }: Props) {
             <span className="ml-2 hidden text-[10px] font-medium uppercase tracking-widest text-clay sm:inline">AI Travel</span>
           </div>
         </button>
+
+        <MyTripsPanel onSelectTrip={onSelectTrip} />
       </div>
     </nav>
   );

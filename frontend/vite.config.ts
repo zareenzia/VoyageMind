@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/runs': 'http://localhost:8787',
+      '/trips': 'http://localhost:8787',
     },
     fs: {
       allow: ['.', '..'],
