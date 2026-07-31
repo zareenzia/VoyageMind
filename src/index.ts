@@ -1,4 +1,5 @@
 import { AgentValidationError } from "./agents/run.js";
+import { formatItineraryPretty } from "./cli/pretty.js";
 import { PipelineBlockedError, runPipeline, type ProgressEvent } from "./orchestrator.js";
 
 /**
@@ -7,11 +8,14 @@ import { PipelineBlockedError, runPipeline, type ProgressEvent } from "./orchest
  * Writer (user-facing prose) is Phase 1, alongside the frontend it's for.
  *
  * Usage: npm run dev -- "5 days in Tokyo in October, two of us, about $4000"
+ *        npm run dev -- --pretty "5 days in Tokyo in October, two of us, about $4000"
  */
 async function main() {
-  const request = process.argv.slice(2).join(" ");
+  const args = process.argv.slice(2);
+  const pretty = args.includes("--pretty");
+  const request = args.filter((a) => a !== "--pretty").join(" ");
   if (!request) {
-    console.error('Usage: npm run dev -- "your travel request"');
+    console.error('Usage: npm run dev -- [--pretty] "your travel request"');
     process.exit(1);
   }
 
@@ -23,7 +27,12 @@ async function main() {
     console.error(`[${marker}] ${event.stage}: ${event.message}`);
   });
 
-  const { itinerary, critique, revisionsUsed } = await result;
+  const { brief, itinerary, critique, revisionsUsed } = await result;
+
+  if (pretty) {
+    console.log(formatItineraryPretty(itinerary, critique, brief.travellers.count, revisionsUsed));
+    return;
+  }
 
   console.log(JSON.stringify(itinerary, null, 2));
 
