@@ -25,4 +25,8 @@ export const LIMITS = {
    * dozens of named places (Sohra alone returned 88) — passing all of them with
    * full tags is context the fast model doesn't need to do its job well. */
   candidatesPerDestination: 40,
+  /** Retain finished run events for SSE replay before evicting from memory. */
+  runRetentionMinutes: 10,
+  /** Hard-stop in-memory run retention, even if terminal event never arrived. */
+  runAbsoluteMaxMinutes: 30,
 } as const;

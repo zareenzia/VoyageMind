@@ -479,3 +479,82 @@ export const CritiqueJudgmentSchema = CritiqueResultSchema.omit({
   hard_failures: true,
 });
 export type CritiqueJudgment = z.infer<typeof CritiqueJudgmentSchema>;
+
+export const PipelineStageSchema = z.enum(["intake", "guide", "itinerary", "critic"]);
+export type PipelineStage = z.infer<typeof PipelineStageSchema>;
+
+const RunEventBaseSchema = z.object({
+  run_id: z.string().uuid(),
+  seq: z.number().int().min(0),
+  timestamp: z.iso.datetime(),
+});
+
+export const RunStartedEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("run_started"),
+  request: z.string().min(1),
+  today: isoDate,
+});
+
+export const StageProgressEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("stage_progress"),
+  stage: PipelineStageSchema,
+  status: z.enum(["started", "completed", "failed"]),
+  message: z.string(),
+  revision_round: z.number().int().min(0).nullable(),
+});
+
+export const DestinationProgressEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("destination_progress"),
+  stage: z.literal("guide"),
+  destination: z.string().min(1),
+  status: z.enum(["started", "completed", "failed"]),
+  message: z.string(),
+});
+
+export const RevisionProgressEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("revision_progress"),
+  round: z.number().int().min(1),
+  status: z.enum(["started", "completed"]),
+  message: z.string(),
+});
+
+export const RunSucceededEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("run_succeeded"),
+  payload: z.object({
+    brief: TripBriefSchema,
+    destinations: z.array(DestinationSchema),
+    itinerary: ItinerarySchema,
+    critique: CritiqueResultSchema,
+    revisions_used: z.number().int().min(0),
+  }),
+});
+
+export const RunBlockedEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("run_blocked"),
+  message: z.string(),
+  open_questions: z.array(z.string()).min(1),
+});
+
+export const RunFailedEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("run_failed"),
+  stage: PipelineStageSchema.nullable(),
+  message: z.string(),
+});
+
+export const RunTerminalEventSchema = z.discriminatedUnion("kind", [
+  RunSucceededEventSchema,
+  RunBlockedEventSchema,
+  RunFailedEventSchema,
+]);
+export type RunTerminalEvent = z.infer<typeof RunTerminalEventSchema>;
+
+export const RunEventSchema = z.discriminatedUnion("kind", [
+  RunStartedEventSchema,
+  StageProgressEventSchema,
+  DestinationProgressEventSchema,
+  RevisionProgressEventSchema,
+  RunSucceededEventSchema,
+  RunBlockedEventSchema,
+  RunFailedEventSchema,
+]);
+export type RunEvent = z.infer<typeof RunEventSchema>;
