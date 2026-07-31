@@ -34,6 +34,8 @@ export function projectProgressEvent(context: EventContext, progress: ProgressEv
       kind: "destination_progress",
       stage: "guide",
       destination: progress.destination,
+      index: progress.destinationIndex ?? 0,
+      total: progress.destinationTotal ?? 1,
       status: progress.status,
       message: progress.message,
     });
@@ -52,6 +54,22 @@ export function projectProgressEvent(context: EventContext, progress: ProgressEv
 export function makeRunSucceededEvent(context: EventContext, result: PipelineResult): RunEvent {
   return RunEventSchema.parse({
     kind: "run_succeeded",
+    run_id: context.runId,
+    seq: context.nextSeq,
+    timestamp: nowIso(),
+    payload: {
+      brief: result.brief,
+      destinations: result.destinations,
+      itinerary: result.itinerary,
+      critique: result.critique,
+      revisions_used: result.revisionsUsed,
+    },
+  });
+}
+
+export function makeRunInfeasibleEvent(context: EventContext, result: PipelineResult): RunEvent {
+  return RunEventSchema.parse({
+    kind: "run_infeasible",
     run_id: context.runId,
     seq: context.nextSeq,
     timestamp: nowIso(),

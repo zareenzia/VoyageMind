@@ -7,6 +7,7 @@ import { PipelineBlockedError, runPipeline, type ProgressEvent } from "./orchest
 import {
   makeRunBlockedEvent,
   makeRunFailedEvent,
+  makeRunInfeasibleEvent,
   makeRunStartedEvent,
   makeRunSucceededEvent,
   projectProgressEvent,
@@ -27,7 +28,7 @@ const runStore = new InMemoryRunStore();
 const subscribers = new Map<string, Set<(event: RunEvent) => void>>();
 
 function isTerminal(event: RunEvent): boolean {
-  return event.kind === "run_succeeded" || event.kind === "run_blocked" || event.kind === "run_failed";
+  return event.kind === "run_succeeded" || event.kind === "run_blocked" || event.kind === "run_failed" || event.kind === "run_infeasible";
 }
 
 function getSubscribers(runId: string): Set<(event: RunEvent) => void> {
@@ -96,7 +97,11 @@ function startRun(runId: string, request: string, today: string): void {
   void (async () => {
     try {
       const pipelineResult = await result;
-      appendAndPublish(runId, makeRunSucceededEvent({ runId, nextSeq: next() }, pipelineResult));
+      if (pipelineResult.critique.verdict === "infeasible") {
+        appendAndPublish(runId, makeRunInfeasibleEvent({ runId, nextSeq: next() }, pipelineResult));
+      } else {
+        appendAndPublish(runId, makeRunSucceededEvent({ runId, nextSeq: next() }, pipelineResult));
+      }
       terminalEmitted = true;
     } catch (error) {
       if (error instanceof PipelineBlockedError) {

@@ -16,7 +16,7 @@ export interface RunStore {
 }
 
 function isTerminalEvent(event: RunEvent): event is RunTerminalEvent {
-  return event.kind === "run_succeeded" || event.kind === "run_blocked" || event.kind === "run_failed";
+  return event.kind === "run_succeeded" || event.kind === "run_blocked" || event.kind === "run_failed" || event.kind === "run_infeasible";
 }
 
 function eventTimeMs(event: RunEvent): number {

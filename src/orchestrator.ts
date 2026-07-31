@@ -23,6 +23,8 @@ export interface ProgressEvent {
   status: "started" | "completed" | "failed";
   message: string;
   destination?: string;
+  destinationIndex?: number;
+  destinationTotal?: number;
   revisionRound?: number;
 }
 
@@ -150,12 +152,14 @@ async function runPipelineInternal(
   const destinationResults = await mapWithConcurrency(
     brief.destinations,
     LIMITS.maxParallelResearch,
-    async (name) => {
+    async (name, i) => {
       emit({
         stage: "guide",
         status: "started",
         message: `Researching destination "${name}"...`,
         destination: name,
+        destinationIndex: i,
+        destinationTotal: brief.destinations.length,
       });
       const researched = await researchDestination(brief, name);
       emit({
@@ -163,15 +167,19 @@ async function runPipelineInternal(
         status: "completed",
         message: `Finished destination "${name}".`,
         destination: name,
+        destinationIndex: i,
+        destinationTotal: brief.destinations.length,
       });
       return researched;
     },
-    (name, _i, error) => {
+    (name, i, error) => {
       emit({
         stage: "guide",
         status: "failed",
         message: `Could not research "${name}": ${(error as Error).message}`,
         destination: name,
+        destinationIndex: i,
+        destinationTotal: brief.destinations.length,
       });
     },
   );

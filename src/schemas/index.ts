@@ -507,6 +507,8 @@ export const DestinationProgressEventSchema = RunEventBaseSchema.extend({
   kind: z.literal("destination_progress"),
   stage: z.literal("guide"),
   destination: z.string().min(1),
+  index: z.number().int().min(0),
+  total: z.number().int().min(1),
   status: z.enum(["started", "completed", "failed"]),
   message: z.string(),
 });
@@ -541,10 +543,22 @@ export const RunFailedEventSchema = RunEventBaseSchema.extend({
   message: z.string(),
 });
 
+export const RunInfeasibleEventSchema = RunEventBaseSchema.extend({
+  kind: z.literal("run_infeasible"),
+  payload: z.object({
+    brief: TripBriefSchema,
+    destinations: z.array(DestinationSchema),
+    itinerary: ItinerarySchema,
+    critique: CritiqueResultSchema,
+    revisions_used: z.number().int().min(0),
+  }),
+});
+
 export const RunTerminalEventSchema = z.discriminatedUnion("kind", [
   RunSucceededEventSchema,
   RunBlockedEventSchema,
   RunFailedEventSchema,
+  RunInfeasibleEventSchema,
 ]);
 export type RunTerminalEvent = z.infer<typeof RunTerminalEventSchema>;
 
@@ -556,5 +570,6 @@ export const RunEventSchema = z.discriminatedUnion("kind", [
   RunSucceededEventSchema,
   RunBlockedEventSchema,
   RunFailedEventSchema,
+  RunInfeasibleEventSchema,
 ]);
 export type RunEvent = z.infer<typeof RunEventSchema>;

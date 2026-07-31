@@ -19,17 +19,21 @@ describe("run event projection", () => {
     expect(event.seq).toBe(7);
   });
 
-  it("projects guide destination updates to destination_progress", () => {
+  it("projects guide destination updates to destination_progress with index and total", () => {
     const progress: ProgressEvent = {
       stage: "guide",
       status: "failed",
       destination: "Meghalaya",
+      destinationIndex: 1,
+      destinationTotal: 3,
       message: "Could not research Meghalaya",
     };
     const event = projectProgressEvent({ runId: RUN_ID, nextSeq: 3 }, progress);
     expect(event.kind).toBe("destination_progress");
     if (event.kind !== "destination_progress") return;
     expect(event.destination).toBe("Meghalaya");
+    expect(event.index).toBe(1);
+    expect(event.total).toBe(3);
     expect(event.stage).toBe("guide");
   });
 
