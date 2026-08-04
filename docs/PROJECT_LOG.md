@@ -1,16 +1,19 @@
-# VoyageMind — Project Log (Phase 0 Retrospective)
+# VoyageMind — Project Log
 
-**Last updated:** 29 July 2026
-**Status:** Phase 0 complete. Four agents (Intake, Guide, Itinerary, Critic) plus the
-orchestrator, all evals passing, verified end-to-end against the spec's own headline example
-(`npm run dev -- "4 days in Meghalaya, BDT 45,000"`). Phase 1 (persistence, frontend, Writer)
-next.
+**Last updated:** 4 August 2026
+**Status:** Phase 1 in progress. All five agents built and evaluated. Neon trip persistence
+(D7/D8), React frontend with SSE run streaming and a rendered written plan, and the Writer
+agent. Authentication is deliberately *not* built — see §8, where trying to build it as a side
+effect cost a day.
+
+Read §5 for the design lesson (five blocked fabrications) and §8 for the process one (a branch
+that was reported done, never merged, and got reimplemented from scratch).
 
 ---
 
 ## 1. What this project is
 
-VoyageMind is a **multi-agent travel planner**. Instead of one AI doing everything, four
+VoyageMind is a **multi-agent travel planner**. Instead of one AI doing everything, five
 specialised agents each handle one job and pass structured data to the next one, with
 deterministic code doing everything that isn't judgement.
 
@@ -41,11 +44,18 @@ User: "4 days in Meghalaya, BDT 45,000"
    |          checkItinerary(), never the model's call. 3/3 evals.
    |  <-- capped revision loop (orchestrator.ts), max 2 rounds -->
    v
-Validated Itinerary + CritiqueResult, pretty-printed by the CLI.
+Validated Itinerary + CritiqueResult
+   |
+   v
+[Writer]      Itinerary + TripBrief -> user-facing prose. 5/5 evals. Runs ONLY on
+              a `pass`, and its failure is swallowed — prose is presentational and
+              last, so losing it must never turn a validated Itinerary into a
+              failed run (runWriterStage).
 ```
 
-Writer (`Itinerary` -> user-facing prose) is Phase 1, alongside the frontend it renders for —
-see spec §7.1. Phase 0 ends at validated JSON, not prose.
+Writer was Phase 1 by design, alongside the frontend it renders for — see spec §7.1. Phase 0
+ended at validated JSON, not prose, so that prose never became the thing holding up a
+correctness milestone.
 
 ---
 
@@ -252,7 +262,161 @@ to assume, it's a number worth re-measuring.
 
 ---
 
-## 7. Setup log — what broke and why (historical; environment/tooling issues from early setup)
+## 7. Phase 1 — what's built
+
+**Trip persistence (spec D7, D8).** Runs stay in-memory (`InMemoryRunStore`) for SSE replay; a
+`trips` table gets one row on a payload-bearing terminal event, and none at all for
+`run_blocked`/`run_failed` — there's no itinerary to store and the client already has the
+message. Ownership is an anonymous client-generated token: a "my trips" filter, explicitly not
+an access check, so `getTrip(id)` takes no token and any trip is readable by id like an unlisted
+URL. Payloads are JSONB behind a `schema_version` gate — a mismatch, or a same-version parse
+failure, degrades to a read-only summary instead of throwing. `TRIP_SCHEMA_VERSION` is
+hand-bumped and hand-bumped constants drift, so a snapshot test hashes the stored schemas'
+structural JSON Schema (descriptions stripped) and fails the build if a shape moves without the
+constant moving too.
+
+One contract (`store.contract.ts`) runs against both `InMemoryTripStore` (in `npm test`) and
+`NeonTripStore` against real Neon (`npm run test:neon`, manual). One set of assertions, no
+divergent fake — the alternative is green tests over a broken production path, which §8 turns
+out to be partly about.
+
+**Frontend + SSE.** A 30–90s pipeline with no feedback looks hung rather than slow (§11), which
+is why the orchestrator emitted progress events from day one. The frontend attaches over SSE
+with replay from `Last-Event-ID`, plus a sweep that marks a run abandoned after 5 minutes of
+silence so a client fails cleanly instead of hanging on a dead connection. A saved trip is
+converted into the same `RunEvent` shape a live run produces, so both render through one view.
+
+**Writer.** The fifth agent, and the only one whose output is prose rather than data for a
+downstream agent. What it took to make that prose honest is §8's second half.
+
+---
+
+## 8. 4 August 2026 — the branch that never merged
+
+The most expensive day of the project so far, and none of it was a coding mistake.
+
+### The failure
+
+Phase 1's persistence work — migration, `TripStore`, the contract suite, `schema_version`, the
+drift guard, `legacy-summary.ts` — was committed to a branch called `UI`, reported as done, and
+**never merged to `main`**.
+
+Everything that came after started from a `main` where none of it existed, correctly concluded
+that persistence hadn't been built yet, and built it again from scratch. The reimplementation
+was competent and typechecked. It also:
+
+- dropped `schema_version`, `TRIP_SCHEMA_VERSION` and the drift-guard snapshot, so JSONB
+  payloads became unversioned and ungated
+- dropped `legacy-summary.ts`, so a schema change would render unvalidated data as if valid
+  rather than degrading to a notice
+- dropped `store.contract.ts` and both store implementations, replacing them with raw `getDb()`
+  calls and **no tests at all**
+- swapped `pg` for `@neondatabase/serverless` — the HTTP driver, meant for runtimes that can't
+  hold a TCP connection, in a long-running `node:http` server. Its concrete cost: `INSERT` then
+  `UPDATE` in `addTripVersion` as two independent round trips with no transaction, so a failure
+  between them leaves a version row committed while `current_version` never advances
+- added users, sessions, scrypt and JWTs, contradicting D7's anonymous owner token, plus a
+  login screen the step brief had explicitly said not to build
+
+It also produced a duplicate migration runner and a second, incompatible `trips` table that
+could not coexist with the first in one database.
+
+### Why "write D8 superseding D7" was the wrong fix
+
+The obvious move was a spec entry retiring D7 in favour of accounts. That would have been
+backfilled reasoning for a decision nobody took — the design didn't change, a branch went
+missing. **A spec that records what happened cannot constrain what happens next**, and a
+superseding entry written after the fact quietly converts a violated decision into an approved
+one. Now CLAUDE.md rule 16.
+
+### What was done instead
+
+The unreviewed work was **preserved, not deleted** — it sits on `phase1-persistence-auth` in
+two commits (Writer separated first so it stayed cherry-pickable), with the full reasoning in
+the commit message, so the auth implementation survives as a starting point for a properly
+reviewed auth step. The reviewed persistence was recovered from `UI`, rebased onto `main`, and
+merged. Test count went 124 → 133 on the merge: recovering the branch *restored* nine tests
+that the reimplementation had silently discarded.
+
+Three rules came out of it: **15** (no auth without its own reviewed step — this was the second
+time auth UI arrived attached to an unrelated task; `6f9d20b` is literally "remove premature
+auth UI"), **16** (the spec is a review instrument, not a changelog), and a branch-hygiene
+agreement: merge before starting the next task, and check `git log --oneline main..<branch>`
+before building something that might already exist. "Reported as done" is not "on main".
+
+It recurred the same day. Later, `main` was reported as merged and pushed when it was neither —
+caught only by running `git merge-base --is-ancestor`, which is why that check is now written
+down rather than remembered.
+
+### The Writer review, and 3/3 passing by luck
+
+The Writer agent was also built without review, so it was treated as a review rather than a
+merge: cherry-picked to its own branch, and nothing merged until it had actually been run.
+
+Its evals were reported as **3/3 passing**. They were, and it meant nothing:
+
+1. `npm run eval -- writer` printed `0/0 passed` and **exited 0**. The filter matched case ids,
+   never suite names, so "writer" selected nothing — a typo and a green run were
+   indistinguishable, making rule 6 vacuous for any filtered invocation. A no-match filter now
+   exits 1 and lists every suite and case id.
+2. The three cases asserted only *shape* — `title_not_null`, `sections_min`,
+   `practical_tips_min`. Nothing about fabrication or provenance. They could not have failed on
+   the bug that was actually there.
+3. Re-running the same suite unchanged produced a **different** result: one case ERRORed because
+   `summary` exceeded its 800-character cap after three retries, while the prompt asked for
+   "2-3 paragraphs". A live prompt/schema contradiction (rule 12), intermittent enough that the
+   first run passed and looked like proof.
+
+**The bug the shape tests couldn't see.** `estimated.hours` is not usually true — it is
+*always* true, by construction: `research.ts` instructs the Guide agent to always set it,
+because opening hours are estimated from the category and never sourced. So every clock time in
+every itinerary is a guess. The Writer's prompt never mentioned the flag, and its own rule 1
+example — *"If the itinerary says a place opens at 09:00, you say 09:00"* — directed the model
+to restate that guess as fact, while rule 3 modelled "arrive by 9 AM" as house style. The prose
+read as verified and dropped every provenance signal the rest of the system carries: the `~` in
+`DayTimeline.tsx`, and `checkDay`'s "not verified (hours are estimated, not sourced)".
+
+Fixed in both positions rule 12 requires, with evals that fail on the bug rather than on shape:
+one case forbidding any unhedged clock time, and its mirror asserting that *sourced* hours may
+still be stated precisely — without which the honest fix is to hedge everything
+unconditionally, which throws away real information and is its own dishonesty. Measured:
+**2/5 against the old prompt, 5/5 against the new one.**
+
+Two more defects surfaced only by running things:
+
+- **`runAgent` gave parse failures zero retries.** Malformed JSON escaped the retry loop as a
+  raw `SyntaxError` while schema failures got `maxSchemaRetries` — and there were three escape
+  paths, not one, because `extractJson` was called outside any `try`. Rule 1 says a validation
+  failure is a typed retry, not a crash, and unparseable output is the most basic validation
+  failure there is. It hits Writer hardest: long prose full of quotes and dashes.
+- **The frontend build was broken on `main`, silently.** `npm run typecheck` only covered `src/`
+  and `evals/`. `PipelineStage` had been hand-duplicated as a four-stage union in four frontend
+  files, so adding the Writer stage invalidated every copy — rule 1 drift in exactly the
+  direction "schemas are the contract" exists to prevent. Separately,
+  `frontend/tsconfig.app.json` had no `"strict"`, and without `strictNullChecks` a
+  boolean-literal discriminant doesn't narrow, so `if (!result.ok)` silently failed to select
+  the branch. `typecheck` now runs both.
+
+And the gap that mattered most: **the honesty fix reached nobody.** `writer_output` appeared
+nowhere in `frontend/src`, so the prose and its `caveats` — added specifically so a reader is
+*told* the hours aren't verified rather than left to infer it from hedging — existed only behind
+a CLI flag no user runs. `tripRecordToRunEvent` also dropped `writer_output`, so every saved
+trip would have rendered without prose, making D8's "store rather than regenerate" argument
+moot. Both fixed; caveats render above the day narrative, because hedged wording only reads as
+honesty if you already know why it's hedged.
+
+### The through-line
+
+Every failure this day was a **verification** failure, not a logic one. A branch reported done
+without checking where. Tests that passed without asserting anything that could fail. A green
+`typecheck` that didn't cover half the code. A suite whose filter silently selected nothing.
+Each one produced a confident green signal over an unexamined path — which is the same failure
+mode as §5's fabrications, one level up: a plausible-looking result that nothing distinguishes
+from a real one.
+
+---
+
+## 9. Setup log — what broke and why (historical; environment/tooling issues from early setup)
 
 | # | Problem | Cause | Fix |
 |---|---|---|---|
@@ -272,20 +436,33 @@ whole document of: an eval catching a hole in the *design*, not the prompt.
 
 ---
 
-## 8. Running it
+## 10. Running it
 
 ```bash
 npm run dev -- "4 days in Meghalaya, BDT 45,000"   # full pipeline, validated Itinerary JSON
-npm run eval                                        # all suites (Intake/Guide/Itinerary/Critic)
-npm run eval -- <case-id-substring>                 # filter to matching cases, any suite
-npm run test                                        # vitest — checks/ and tools/ unit tests
-npm run typecheck                                   # tsc, should print nothing
+npm run dev -- --pretty "..."                       # rendered itinerary + written plan
+npm run server                                      # HTTP + SSE run streaming on :8787
+npm run build --prefix frontend                     # tsc -b && vite build
+npm run eval                                        # all five suites
+npm run eval -- writer                              # one suite by name
+npm run eval -- <case-id-substring>                 # or any case whose id matches
+npm run test                                        # vitest — checks/, tools/, trips/, agents/
+npm run typecheck                                   # server AND frontend, should print nothing
+npm run migrate                                     # migrations/*.sql, needs DATABASE_URL_UNPOOLED
+npm run test:neon                                   # TripStore contract vs real Neon, manual
 ```
+
+A filter matching no cases **exits 1** and lists the available suites and case ids. It used to
+print `0/0 passed` and exit 0, which made a typo indistinguishable from a green run — see §8.
+
+`npm run typecheck` covers `frontend/` as well as `src/`. Until 2026-08-04 it didn't, and the
+frontend build was broken on `main` for a day with nothing reporting it.
 
 `npm run dev` prints progress events to stderr (stage/status/message) as the pipeline runs —
 30-90 seconds is normal (measured: a single Overpass query over a full state's bounding box
 alone took 43 seconds) — then the validated `Itinerary` JSON to stdout, followed by the
-Critic's verdict, hard failures, notes, and suggested fixes.
+Critic's verdict, hard failures, notes, and suggested fixes. With `--pretty`, the Writer's plan
+follows, ending with its caveats under "Before you go".
 
 ### Working across two machines
 
@@ -312,7 +489,7 @@ spend cap before it runs.
 
 ---
 
-## 9. Cost and latency
+## 11. Cost and latency
 
 **Measured, not assumed (2026-07-28):** a single Overpass query over a full state's bounding
 box (~300km across, all categories) took 43 seconds, before any model call. With
@@ -322,13 +499,18 @@ requirement (rule 11) and the Phase 1 frontend's need for SSE, not an estimate.
 
 Cache destination research aggressively — a region's attractions don't change weekly, and
 every network tool in this project (`currency`, `places`, `geocode`, `elevation`) caches to
-disk for exactly this reason. Current eval spend is one live run of four short suites
-(19 cases total across Intake/Guide/Itinerary/Critic); it grows with Guide's parallel fan-out
-and again with however many revision rounds a given itinerary actually needs.
+disk for exactly this reason. Current eval spend is one live run of five short suites (24 cases
+across Intake/Guide/Itinerary/Critic/Writer); it grows with Guide's parallel fan-out and again
+with however many revision rounds a given itinerary actually needs.
+
+Worth knowing before iterating on the Writer: its evals are the cheapest to run but the easiest
+to over-run. Getting the prompt right took four full suite runs, and two of them failed for
+reasons unrelated to the change under test — a schema cap and an intermittent JSON parse error.
+Budget for re-runs, and read which case failed rather than the pass count.
 
 ---
 
-## 10. Working with Claude Code on this repo
+## 12. Working with Claude Code on this repo
 
 Open the VS Code integrated terminal in `D:\VoyageMind` and run `claude`. It reads
 `../CLAUDE.md` automatically.

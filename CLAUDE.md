@@ -17,8 +17,10 @@ Critic     Itinerary          ->  CritiqueResult     (pass | revise | infeasible
 Writer     Itinerary          ->  user-facing plan                        [PHASE 1]
 ```
 
-Writer is Phase 1, not Phase 0 (spec §7.1/§11) — no prose formatting until there's a
-frontend for it to render. The Critic can return work to the Itinerary agent. **Maximum 2
+Writer was Phase 1, not Phase 0 (spec §7.1/§11) — no prose formatting until there was a
+frontend for it to render. Both now exist: `runWriterStage` is gated on a `pass` verdict and
+its failure is swallowed, since prose is presentational and must never turn a validated
+Itinerary into a failed run. The Critic can return work to the Itinerary agent. **Maximum 2
 revision rounds**, enforced in `orchestrator.ts`, never left to the model's discretion.
 
 ## Non-negotiable rules
@@ -117,18 +119,33 @@ say which branch it landed on.
 ## Commands
 
 ```bash
-npm run dev -- "your request"   # run the pipeline from the CLI
+npm run dev -- "your request"   # run the pipeline from the CLI (--pretty to render it)
+npm run server                  # HTTP + SSE run streaming on :8787
 npm run eval                    # full eval suite
-npm run eval -- <case-id>       # single case
+npm run eval -- <suite|case-id> # one suite, or any case whose id matches
 npm run test                    # unit tests (vitest)
-npm run typecheck               # tsc --noEmit
+npm run typecheck               # server AND frontend — both, or it proves nothing
+npm run migrate                 # apply migrations/*.sql (needs DATABASE_URL_UNPOOLED)
+npm run test:neon               # TripStore contract against real Neon, manual only
+npm run build --prefix frontend # tsc -b && vite build
 ```
+
+`npm run typecheck` covers `frontend/` as well as `src/`. It did not until 2026-08-04, and the
+frontend build was broken on `main` for a day without anything reporting it.
 
 ## Current state
 
-Phase 0 complete (2026-07-29) — all four agents built and evaluated, orchestrator wired,
-verified end-to-end. What was built, in what order, and why: `docs/PROJECT_LOG.md`. Next:
-Phase 1 (Neon persistence, React frontend + SSE, Writer agent).
+Phase 1 in progress (2026-08-04). Built: Neon trip persistence (spec D7/D8), the React
+frontend with SSE run streaming and a rendered written plan, and the Writer agent — so the
+five-agent diagram above is current, not aspirational.
+
+Deferred on purpose: authentication (rule 15). Ownership is still D7's anonymous owner token,
+which is a "my trips" filter and explicitly not an access check — `getTrip(id)` takes no token,
+so any trip is readable by id like an unlisted URL. Changing that is a D-entry conversation
+that happens *before* an auth step, not inside one.
+
+What was built, in what order, and why — including the 2026-08-04 branch-hygiene failure that
+cost a duplicate persistence implementation: `docs/PROJECT_LOG.md`.
 
 ## Things not to do
 
