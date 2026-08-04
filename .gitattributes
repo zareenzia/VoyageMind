@@ -1,0 +1,6 @@
+# Vitest writes snapshot files with LF. With core.autocrlf=true (the default on
+# the Windows dev machine) git checks them out as CRLF, so the first test run
+# rewrites every snapshot and the tree goes dirty with an EMPTY `git diff` —
+# which also blocks `git checkout` with "local changes would be overwritten".
+# Pinning snapshots to LF makes what git writes match what vitest writes.
+*.snap text eol=lf
