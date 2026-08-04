@@ -27,10 +27,23 @@ async function main() {
     console.error(`[${marker}] ${event.stage}: ${event.message}`);
   });
 
-  const { brief, itinerary, critique, revisionsUsed } = await result;
+  const { brief, itinerary, critique, revisionsUsed, writerOutput } = await result;
 
   if (pretty) {
     console.log(formatItineraryPretty(itinerary, critique, brief.travellers.count, revisionsUsed));
+    if (writerOutput) {
+      console.log(`\n${"═".repeat(60)}\n`);
+      console.log(`  ${writerOutput.title}\n`);
+      console.log(writerOutput.summary);
+      for (const section of writerOutput.sections) {
+        console.log(`\n--- ${section.heading} ---\n`);
+        console.log(section.body);
+      }
+      if (writerOutput.practical_tips.length > 0) {
+        console.log(`\n--- Practical Tips ---\n`);
+        for (const tip of writerOutput.practical_tips) console.log(`  • ${tip}`);
+      }
+    }
     return;
   }
 

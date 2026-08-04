@@ -101,6 +101,7 @@ describe("run event projection", () => {
         suggested_fixes: [],
       },
       revisionsUsed: 0,
+      writerOutput: null,
     } satisfies PipelineResult;
 
     const event = makeRunSucceededEvent({ runId: RUN_ID, nextSeq: 99 }, result);

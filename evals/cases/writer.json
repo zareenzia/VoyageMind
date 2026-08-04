@@ -1,0 +1,208 @@
+[
+  {
+    "id": "basic-meghalaya-plan",
+    "itinerary": {
+      "brief_summary": "4 days exploring waterfalls, living root bridges, and hill towns in Meghalaya.",
+      "days": [
+        {
+          "date": "2026-11-10",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "nohkalikai-falls", "name": "Nohkalikai Falls",
+                "location": { "lat": 25.2756, "lng": 91.6866 }, "address": null,
+                "category": "waterfall", "duration_minutes": 90, "cost_usd_per_person": 2,
+                "opens": "06:00", "closes": "18:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 3933644720,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:30",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            },
+            {
+              "activity": {
+                "id": "mawsmai-cave", "name": "Mawsmai Cave",
+                "location": { "lat": 25.2507, "lng": 91.7235 }, "address": null,
+                "category": "cave", "duration_minutes": 60, "cost_usd_per_person": 1,
+                "opens": "09:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 4567890,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "11:00", "end": "12:00",
+              "transit_minutes_from_previous": 30, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": null,
+          "notes": null
+        },
+        {
+          "date": "2026-11-11",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "seven-sisters-falls", "name": "Seven Sisters Falls",
+                "location": { "lat": 25.2656, "lng": 91.7012 }, "address": null,
+                "category": "waterfall", "duration_minutes": 60, "cost_usd_per_person": 0,
+                "opens": null, "closes": null, "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 1122334,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:00",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": null,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": null,
+      "estimated_total_usd": 10,
+      "estimated_total_complete": false,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "brief": {
+      "origin": "Dhaka",
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "date_expression": { "kind": "explicit", "date": "2026-11-10" },
+      "start_date": "2026-11-10",
+      "end_date": null,
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": 45000,
+      "budget_currency": "BDT",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": ["nature", "waterfalls"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "softNotes": ["Consider adding an evening activity on Day 1"],
+    "expect": {
+      "title_not_null": true,
+      "summary_not_null": true,
+      "sections_min": 2,
+      "practical_tips_min": 3
+    },
+    "why": "A straightforward 2-day itinerary with real places must produce a complete plan with title, summary, day sections, and practical tips."
+  },
+  {
+    "id": "provisional-dates-no-calendar",
+    "itinerary": {
+      "brief_summary": "A weekend in Tokyo: temples, food, and city views.",
+      "days": [
+        {
+          "date": "2026-10-15",
+          "base_city": "Tokyo",
+          "stops": [
+            {
+              "activity": {
+                "id": "senso-ji", "name": "Sensō-ji Temple",
+                "location": { "lat": 35.7148, "lng": 139.7967 }, "address": "2-3-1 Asakusa, Taito",
+                "category": "attraction", "duration_minutes": 90, "cost_usd_per_person": 0,
+                "opens": "06:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "way", "osm_id": 55667788,
+                "estimated": { "duration": true, "cost": false, "hours": false }
+              },
+              "start": "09:00", "end": "10:30",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": null,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": null,
+      "estimated_total_usd": 0,
+      "estimated_total_complete": false,
+      "dates_provisional": true,
+      "construction_notes": ["Dates are provisional — chosen based on destination best_months."]
+    },
+    "brief": {
+      "origin": null,
+      "destinations": ["Tokyo"],
+      "region_hint": null,
+      "date_expression": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": 1,
+      "flexible_dates": true,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "relaxed",
+      "interests": ["temples", "food"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": ["How many days?", "Any budget?"]
+    },
+    "softNotes": [],
+    "expect": {
+      "title_not_null": true,
+      "sections_min": 1,
+      "practical_tips_min": 3
+    },
+    "why": "When dates_provisional is true, Writer must use 'Day 1' style headings rather than specific calendar dates. The output must still be structurally complete."
+  },
+  {
+    "id": "adversarial-minimal-itinerary",
+    "itinerary": {
+      "brief_summary": "Single stop.",
+      "days": [
+        {
+          "date": "2026-12-01",
+          "base_city": "Unknown",
+          "stops": [],
+          "lodging_cost_usd": null,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": null,
+      "estimated_total_usd": 0,
+      "estimated_total_complete": false,
+      "dates_provisional": true,
+      "construction_notes": ["No activities could be scheduled — all candidates were exhausted."]
+    },
+    "brief": {
+      "origin": null,
+      "destinations": ["Nowhere"],
+      "region_hint": null,
+      "date_expression": null,
+      "start_date": null,
+      "end_date": null,
+      "nights": 0,
+      "flexible_dates": true,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": [],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "softNotes": [],
+    "expect": {
+      "title_not_null": true,
+      "sections_min": 1,
+      "practical_tips_min": 1
+    },
+    "why": "Adversarial case: an itinerary with zero stops and minimal info must not crash the Writer — it must still produce a structurally valid output with at least one section and one tip."
+  }
+]

@@ -63,6 +63,7 @@ export function makeRunSucceededEvent(context: EventContext, result: PipelineRes
       itinerary: result.itinerary,
       critique: result.critique,
       revisions_used: result.revisionsUsed,
+      writer_output: result.writerOutput ?? null,
     },
   });
 }

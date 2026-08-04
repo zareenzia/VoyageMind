@@ -16,10 +16,11 @@ import { runIntake } from "./agents/intake.js";
 import { researchDestination } from "./agents/research.js";
 import { runItinerary } from "./agents/itinerary.js";
 import { runCritic } from "./agents/critic.js";
-import type { CritiqueResult, Destination, Itinerary, TripBrief } from "./schemas/index.js";
+import { runWriter } from "./agents/writer.js";
+import type { CritiqueResult, Destination, Itinerary, TripBrief, WriterOutput } from "./schemas/index.js";
 
 export interface ProgressEvent {
-  stage: "intake" | "guide" | "itinerary" | "critic";
+  stage: "intake" | "guide" | "itinerary" | "critic" | "writer";
   status: "started" | "completed" | "failed";
   message: string;
   destination?: string;
@@ -47,6 +48,7 @@ export interface PipelineResult {
   itinerary: Itinerary;
   critique: CritiqueResult;
   revisionsUsed: number;
+  writerOutput: WriterOutput | null;
 }
 
 /**
@@ -246,5 +248,26 @@ async function runPipelineInternal(
     });
   }
 
-  return { brief, destinations, itinerary, critique, revisionsUsed };
+  // Writer stage — only runs when the itinerary is valid (not infeasible)
+  let writerOutput: WriterOutput | null = null;
+  if (critique.verdict === "pass") {
+    emit({ stage: "writer", status: "started", message: "Writing your travel plan..." });
+    try {
+      writerOutput = await runWriter({
+        itinerary,
+        brief,
+        softNotes: critique.soft_notes,
+      });
+      emit({ stage: "writer", status: "completed", message: "Travel plan written." });
+    } catch (error) {
+      emit({
+        stage: "writer",
+        status: "failed",
+        message: `Writer failed: ${(error as Error).message}`,
+      });
+      // Non-fatal: the pipeline result is still valid without prose
+    }
+  }
+
+  return { brief, destinations, itinerary, critique, revisionsUsed, writerOutput };
 }

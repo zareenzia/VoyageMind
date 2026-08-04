@@ -490,7 +490,7 @@ export type CritiqueJudgment = z.infer<typeof CritiqueJudgmentSchema>;
  */
 export const TRIP_SCHEMA_VERSION = 1;
 
-export const PipelineStageSchema = z.enum(["intake", "guide", "itinerary", "critic"]);
+export const PipelineStageSchema = z.enum(["intake", "guide", "itinerary", "critic", "writer"]);
 export type PipelineStage = z.infer<typeof PipelineStageSchema>;
 
 const RunEventBaseSchema = z.object({
@@ -530,6 +530,41 @@ export const RevisionProgressEventSchema = RunEventBaseSchema.extend({
   message: z.string(),
 });
 
+// --- Writer Agent ---
+
+/** A single section of the user-facing travel plan produced by the Writer agent. */
+export const PlanSectionSchema = z.object({
+  heading: z.string().max(100).describe("Section heading, e.g. 'Day 1 — Shillong to Sohra'"),
+  body: z.string().min(1).describe("Prose content for this section. Markdown allowed."),
+});
+export type PlanSection = z.infer<typeof PlanSectionSchema>;
+
+/**
+ * Output of the Writer agent: a user-facing travel plan rendered from a validated
+ * Itinerary. Structured as sections (not a single blob) so the frontend can render
+ * them independently — collapsible day cards, a summary hero, practical tips at the
+ * end. Markdown within each section body.
+ */
+export const WriterOutputSchema = z.object({
+  title: z.string().max(120).describe("Trip title, e.g. '4 Days in Meghalaya — Waterfalls & Living Root Bridges'"),
+  summary: z.string().max(800).describe(
+    "A compelling 2-3 paragraph overview of the trip: highlights, vibe, who it's for. " +
+    "This appears above the day-by-day breakdown.",
+  ),
+  sections: z.array(PlanSectionSchema).min(1).describe(
+    "One section per day of the trip, PLUS an optional 'Practical Tips' section at the " +
+    "end covering budget notes, packing, transport logistics, and anything the traveller " +
+    "should know. Day sections should read as a narrative, not a bullet-point schedule.",
+  ),
+  practical_tips: z.array(z.string()).describe(
+    "Short, actionable tips: what to pack, best transport, currency notes, safety. " +
+    "5-10 items. Not a repeat of the day-by-day content.",
+  ),
+});
+export type WriterOutput = z.infer<typeof WriterOutputSchema>;
+
+// --- Run Events (terminal) ---
+
 export const RunSucceededEventSchema = RunEventBaseSchema.extend({
   kind: z.literal("run_succeeded"),
   payload: z.object({
@@ -538,6 +573,7 @@ export const RunSucceededEventSchema = RunEventBaseSchema.extend({
     itinerary: ItinerarySchema,
     critique: CritiqueResultSchema,
     revisions_used: z.number().int().min(0),
+    writer_output: WriterOutputSchema.nullable(),
   }),
 });
 
