@@ -9,7 +9,9 @@
     "test": "vitest run",
     "test:neon": "vitest run --config vitest.neon.config.ts",
     "eval": "tsx --env-file=.env evals/run.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "npm run typecheck:server && npm run typecheck:frontend",
+    "typecheck:server": "tsc --noEmit",
+    "typecheck:frontend": "tsc --noEmit -p frontend/tsconfig.app.json",
     "migrate": "tsx --env-file=.env scripts/migrate.ts"
   },
   "dependencies": {

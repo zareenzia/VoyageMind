@@ -8,6 +8,7 @@ import { DayTimeline } from "./DayTimeline.tsx";
 import { CritiquePanel } from "./CritiquePanel.tsx";
 import { MapPanel } from "./MapPanel.tsx";
 import { ProvenancePanel } from "./ProvenancePanel.tsx";
+import { PlanNarrative } from "./PlanNarrative.tsx";
 
 interface Props {
   event: RunEvent;
@@ -24,6 +25,9 @@ export function WorkspaceLayout({ event, progress, onNewTrip }: Props) {
   const { itinerary, critique, brief } = event.payload;
   const revisionsUsed = event.payload.revisions_used;
   const travellerCount = brief.travellers.count;
+  // Only run_succeeded carries prose: the Writer stage is gated on a `pass`
+  // verdict, so run_infeasible has no writer_output field at all.
+  const writerOutput = event.kind === "run_succeeded" ? event.payload.writer_output : null;
 
   return (
     <div className="flex h-screen flex-col bg-sand">
@@ -67,6 +71,9 @@ export function WorkspaceLayout({ event, progress, onNewTrip }: Props) {
                 <p className="mt-1 text-xs italic text-clay-light">Flight costs unavailable</p>
               )}
             </div>
+
+            {/* The written plan, with its caveats above the day narrative */}
+            <PlanNarrative writerOutput={writerOutput} verdictWasPass={critique.verdict === "pass"} />
 
             {/* Day-by-day timeline */}
             <div>

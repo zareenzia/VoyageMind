@@ -1,12 +1,13 @@
+import type { PipelineStage } from "@shared/schemas/index.ts";
 import type { RunState } from "../../hooks/useRun.ts";
 
-type PipelineStage = "intake" | "guide" | "itinerary" | "critic";
-
+// From the schema, not a local copy — see the note in hooks/useRun.ts.
 const STAGES: { key: PipelineStage; label: string; icon: string }[] = [
   { key: "intake", label: "Intake", icon: "📋" },
   { key: "guide", label: "Guide", icon: "🔍" },
   { key: "itinerary", label: "Itinerary", icon: "🗺️" },
   { key: "critic", label: "Critic", icon: "✓" },
+  { key: "writer", label: "Writer", icon: "✍️" },
 ];
 
 interface Props {

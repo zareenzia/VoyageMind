@@ -1,10 +1,14 @@
 import { useCallback, useReducer, useRef } from "react";
-import { RunEventSchema, type RunEvent } from "@shared/schemas/index.ts";
+import { RunEventSchema, type PipelineStage, type RunEvent } from "@shared/schemas/index.ts";
 import { getOwnerToken } from "../lib/ownerToken.ts";
 
 // --- State types ---
-
-type PipelineStage = "intake" | "guide" | "itinerary" | "critic";
+//
+// PipelineStage comes from the schema, never a local copy. It used to be
+// hand-duplicated here as a four-stage union, which silently went stale the
+// moment the Writer stage was added — and the frontend isn't covered by the
+// root `npm run typecheck`, so nothing caught it. That is rule 1 ("schemas are
+// the contract") failing in the one direction the rule exists to prevent.
 
 interface DestinationStatus {
   name: string;
@@ -38,7 +42,15 @@ export interface RunState {
 
 const INITIAL_PROGRESS: RunProgress = {
   currentStage: null,
-  stageStatuses: { intake: "pending", guide: "pending", itinerary: "pending", critic: "pending" },
+  // Record<PipelineStage, …> — adding a stage to the schema now fails to compile
+  // here until it is listed, which is the point.
+  stageStatuses: {
+    intake: "pending",
+    guide: "pending",
+    itinerary: "pending",
+    critic: "pending",
+    writer: "pending",
+  },
   destinations: [],
   destinationTotal: 0,
   revisionRound: 0,

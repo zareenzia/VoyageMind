@@ -1,13 +1,15 @@
+import type { PipelineStage } from "@shared/schemas/index.ts";
 import type { RunState } from "../hooks/useRun.ts";
 import { useEffect, useState } from "react";
 
-type PipelineStage = "intake" | "guide" | "itinerary" | "critic";
-
+// Keyed by the schema's PipelineStage rather than a local copy of the union —
+// the copy went stale when the Writer stage was added and nothing caught it.
 const STAGES: { key: PipelineStage; label: string; description: string }[] = [
   { key: "intake", label: "Reading", description: "Understanding your request" },
   { key: "guide", label: "Researching", description: "Exploring destinations" },
   { key: "itinerary", label: "Planning", description: "Building your itinerary" },
   { key: "critic", label: "Reviewing", description: "Checking feasibility" },
+  { key: "writer", label: "Writing", description: "Writing up your plan" },
 ];
 
 interface Props {

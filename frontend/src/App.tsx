@@ -55,9 +55,21 @@ function tripRecordToRunEvent(trip: TripRecord): RunEvent {
     revisions_used: trip.revisionsUsed,
   };
   if (trip.status === "infeasible") {
+    // No writer_output on this event kind at all — the Writer stage is gated on
+    // a `pass`, so an infeasible trip never had prose to lose.
     return { kind: "run_infeasible", run_id: trip.id, seq: 0, timestamp: trip.createdAt, payload };
   }
-  return { kind: "run_succeeded", run_id: trip.id, seq: 0, timestamp: trip.createdAt, payload };
+  return {
+    kind: "run_succeeded",
+    run_id: trip.id,
+    seq: 0,
+    timestamp: trip.createdAt,
+    // Carried through explicitly: leaving it off here silently dropped the prose
+    // on every saved trip, which would have made persisting it (D8) pointless —
+    // the whole reason to store rather than regenerate is that the traveller sees
+    // the same words again.
+    payload: { ...payload, writer_output: trip.writerOutput },
+  };
 }
 
 type View = "home" | "planner";

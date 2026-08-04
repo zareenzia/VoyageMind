@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    /* The shared types under @shared/* are written for the root tsconfig, which
+       is strict. Without strictNullChecks here, a boolean-literal discriminant
+       does not narrow — `if (!result.ok)` on TripReadResult silently failed to
+       select the branch, producing three errors that looked like the code was
+       wrong when the config was. Enabling strict fixed all three and introduced
+       none. */
+    "strict": true,
     "target": "es2023",
     "lib": ["ES2023", "DOM"],
     "module": "esnext",
