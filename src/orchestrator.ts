@@ -16,7 +16,7 @@ import { runIntake } from "./agents/intake.js";
 import { researchDestination } from "./agents/research.js";
 import { runItinerary } from "./agents/itinerary.js";
 import { runCritic } from "./agents/critic.js";
-import { runWriter } from "./agents/writer.js";
+import { runWriter, type WriterInput } from "./agents/writer.js";
 import type { CritiqueResult, Destination, Itinerary, TripBrief, WriterOutput } from "./schemas/index.js";
 
 export interface ProgressEvent {
@@ -248,26 +248,47 @@ async function runPipelineInternal(
     });
   }
 
-  // Writer stage — only runs when the itinerary is valid (not infeasible)
-  let writerOutput: WriterOutput | null = null;
-  if (critique.verdict === "pass") {
-    emit({ stage: "writer", status: "started", message: "Writing your travel plan..." });
-    try {
-      writerOutput = await runWriter({
-        itinerary,
-        brief,
-        softNotes: critique.soft_notes,
-      });
-      emit({ stage: "writer", status: "completed", message: "Travel plan written." });
-    } catch (error) {
-      emit({
-        stage: "writer",
-        status: "failed",
-        message: `Writer failed: ${(error as Error).message}`,
-      });
-      // Non-fatal: the pipeline result is still valid without prose
-    }
-  }
+  const writerOutput = await runWriterStage({ itinerary, brief, critique }, emit);
 
   return { brief, destinations, itinerary, critique, revisionsUsed, writerOutput };
+}
+
+/**
+ * The Writer stage. Extracted and exported so both of its branches are testable
+ * without a model call — two rules live here, and neither is the model's to make.
+ *
+ * 1. Prose is only written for a `pass`. The Writer's prompt asserts that every
+ *    fact it receives is validated, which is precisely untrue of an itinerary
+ *    that failed its hard checks — so an `infeasible` (or still-`revise`) result
+ *    must never be dressed up as a readable plan.
+ * 2. A Writer failure is non-fatal. Prose is the last and purely presentational
+ *    stage; losing it must never turn a validated Itinerary into a failed run.
+ *    The stage returns null, emits a `failed` progress event, and the caller
+ *    goes on to report the run's real terminal state — which is keyed off
+ *    `critique.verdict`, never off whether prose exists.
+ *
+ * `writer` is injectable only so tests can drive both branches; production
+ * always uses the default.
+ */
+export async function runWriterStage(
+  args: { itinerary: Itinerary; brief: TripBrief; critique: CritiqueResult },
+  emit: (event: ProgressEvent) => void,
+  writer: (input: WriterInput) => Promise<WriterOutput> = runWriter,
+): Promise<WriterOutput | null> {
+  const { itinerary, brief, critique } = args;
+  if (critique.verdict !== "pass") return null;
+
+  emit({ stage: "writer", status: "started", message: "Writing your travel plan..." });
+  try {
+    const writerOutput = await writer({ itinerary, brief, softNotes: critique.soft_notes });
+    emit({ stage: "writer", status: "completed", message: "Travel plan written." });
+    return writerOutput;
+  } catch (error) {
+    emit({
+      stage: "writer",
+      status: "failed",
+      message: `Writer failed: ${(error as Error).message}`,
+    });
+    return null;
+  }
 }
