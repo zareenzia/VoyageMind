@@ -108,20 +108,58 @@ async function main() {
   const filter = process.argv[2];
   const caseFiles = readdirSync(join(here, "cases")).filter((f) => f.endsWith(".json"));
 
+  // Load every suite up front, so a filter that matches nothing can report what
+  // WAS available instead of printing "0/0 passed" and exiting 0.
+  const loaded: { suiteName: string; cases: Case[] }[] = [];
+  for (const file of caseFiles) {
+    const suiteName = file.replace(/\.json$/, "");
+    if (!SUITES[suiteName]) {
+      console.log(`  (skipping ${file} — no registered suite named "${suiteName}")`);
+      continue;
+    }
+    loaded.push({ suiteName, cases: JSON.parse(readFileSync(join(here, "cases", file), "utf8")) });
+  }
+
+  // A bare suite name is the obvious thing to type (`npm run eval -- writer`),
+  // so it's accepted alongside case-id substrings. An exact suite match wins;
+  // anything else is matched against case ids across all suites.
+  const isSuiteFilter = filter !== undefined && loaded.some((s) => s.suiteName === filter);
+  const selection = loaded.map(({ suiteName, cases }) => ({
+    suiteName,
+    cases:
+      filter === undefined
+        ? cases
+        : isSuiteFilter
+          ? suiteName === filter
+            ? cases
+            : []
+          : cases.filter((c) => c.id.includes(filter)),
+  }));
+
+  // Rule 6 says evals gate changes. A filter that selects nothing used to print
+  // "0/0 passed" and exit 0, which makes a typo indistinguishable from a green
+  // run — in CI that silently gates nothing at all. Fail loudly instead.
+  const selectedCount = selection.reduce((n, s) => n + s.cases.length, 0);
+  if (selectedCount === 0) {
+    const reason =
+      filter === undefined
+        ? "No eval cases found at all."
+        : `No eval cases matched "${filter}".`;
+    console.error(`\n${reason}\n`);
+    console.error(`Filter by suite name: ${loaded.map((s) => s.suiteName).join(", ")}`);
+    console.error(`\nOr by case id (substring match):`);
+    for (const { suiteName, cases } of loaded) {
+      console.error(`  ${suiteName}: ${cases.map((c) => c.id).join(", ")}`);
+    }
+    process.exit(1);
+  }
+
   let passed = 0;
   let total = 0;
   const failures: string[] = [];
 
-  for (const file of caseFiles) {
-    const suiteName = file.replace(/\.json$/, "");
-    const suite = SUITES[suiteName];
-    if (!suite) {
-      console.log(`  (skipping ${file} — no registered suite named "${suiteName}")`);
-      continue;
-    }
-
-    const cases: Case[] = JSON.parse(readFileSync(join(here, "cases", file), "utf8"));
-    const selected = filter ? cases.filter((c) => c.id.includes(filter)) : cases;
+  for (const { suiteName, cases: selected } of selection) {
+    const suite = SUITES[suiteName]!;
 
     for (const testCase of selected) {
       total++;
