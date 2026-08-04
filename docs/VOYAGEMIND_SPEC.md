@@ -266,6 +266,46 @@ correct degradation (a storage failure must never turn a successful run into a v
 but it means the failure is silent to the user by design, so the server logs it loudly
 (`console.error`, never the raw error's connection details) rather than swallowing it quietly.
 
+### D8 — `writer_output` joins the stored payload; the version guard now covers five schemas (2026-08-04)
+
+**Decision:** The Writer agent's prose is persisted, as a nullable `writer_output JSONB` column on
+`trips` (`migrations/0002_add_writer_output.sql`), and `WriterOutputSchema` comes under the
+`TRIP_SCHEMA_VERSION` drift guard alongside the four payload schemas D7 named. This supersedes
+nothing in D7 — the hybrid store, the anonymous owner token, the read-by-id model and the version
+gate are all unchanged. What changes is the scope of "the stored payload," and what that
+hand-bumped constant is responsible for.
+
+**Why store it instead of regenerating on read:** regenerating prose needs a live model call and is
+non-deterministic, so a reopened trip would show *different* prose than the traveller actually
+read — the same itinerary, the same plan, and the words describing it quietly changed between
+visits. That is worse than showing none. Storing it also keeps a saved trip fully readable without
+an API key, a spend cap, or an unexpired OAuth session.
+
+**Why this needs no version bump:** the column is nullable and `TripPayloadSchema` parses it as
+`WriterOutputSchema.nullable()`, so every row written before it existed still parses at
+`TRIP_SCHEMA_VERSION` 1 exactly as before. Verified rather than assumed: adding
+`WriterOutputSchema` to `src/schemas/trip-schema-version.test.ts` left all four existing hashes
+untouched — the snapshot diff is a pure addition.
+
+**Nullable is a real state here, not missing data,** with two distinct causes: a run that predates
+the Writer, and a run whose Writer stage failed. The second is swallowed on purpose
+(`runWriterStage` in `src/orchestrator.ts`) because prose is presentational and last — losing it
+must never turn a validated Itinerary into a failed run. So a SQL `NULL` has to stay
+distinguishable from the JSONB scalar `'null'`, which is why `NeonTripStore` passes a real `null`
+rather than `JSON.stringify(null)` for that parameter.
+
+**What the guard means now:** the column's *arrival* needed no bump, but a later change to
+`WriterOutputSchema`'s shape can still break parsing of rows that do carry prose — which is
+precisely what the guard exists to catch. Widening a hand-bumped constant's responsibility from
+four schemas to five is a deliberate scope change, so it is recorded here as a decision rather
+than left to be inferred from the test file later.
+
+**Follow-up (not built):** the frontend renders no Writer output at all — `writer_output` appears
+nowhere in `frontend/src/`, so prose currently reaches a reader only through
+`npm run dev -- --pretty`. Until that lands, `WriterOutput.caveats` — which exists so the reader is
+told once, plainly, that opening hours are estimated rather than confirmed — is invisible on the
+web path, and the web reader gets the hedged wording without the explanation for it.
+
 ---
 
 # 7. Agents and tools

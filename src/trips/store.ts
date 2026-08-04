@@ -5,10 +5,12 @@ import {
   ItinerarySchema,
   TripBriefSchema,
   TRIP_SCHEMA_VERSION,
+  WriterOutputSchema,
   type CritiqueResult,
   type Destination,
   type Itinerary,
   type TripBrief,
+  type WriterOutput,
 } from "../schemas/index.js";
 import { extractLegacySummary, LEGACY_TRIP_NOTICE, type LegacyTripSummary } from "./legacy-summary.js";
 
@@ -30,6 +32,12 @@ export interface TripRecordInput {
   destinations: Destination[];
   itinerary: Itinerary;
   critique: CritiqueResult;
+  /** The Writer's prose, or null — either the run predates the Writer, or its
+   * stage failed (swallowed by design, see runWriterStage). Stored rather than
+   * regenerated on read: regenerating needs a live model call and is
+   * non-deterministic, so a reopened trip would show different prose than the
+   * one the traveller read. */
+  writerOutput: WriterOutput | null;
   revisionsUsed: number;
 }
 
@@ -63,6 +71,9 @@ const TripPayloadSchema = z.object({
   destinations: z.array(DestinationSchema),
   itinerary: ItinerarySchema,
   critique: CritiqueResultSchema,
+  // Nullable, so a row written before writer_output existed still parses at the
+  // same TRIP_SCHEMA_VERSION — the reason D8 needs no version bump.
+  writerOutput: WriterOutputSchema.nullable(),
 });
 
 /**
@@ -83,6 +94,7 @@ export function toTripReadResult(row: {
   destinations: unknown;
   itinerary: unknown;
   critique: unknown;
+  writerOutput: unknown;
   revisionsUsed: number;
   createdAt: string;
 }): TripReadResult {
@@ -101,6 +113,7 @@ export function toTripReadResult(row: {
     destinations: row.destinations,
     itinerary: row.itinerary,
     critique: row.critique,
+    writerOutput: row.writerOutput ?? null,
   });
 
   if (!parsed.success) {
@@ -129,6 +142,7 @@ export function toTripReadResult(row: {
       destinations: parsed.data.destinations,
       itinerary: parsed.data.itinerary,
       critique: parsed.data.critique,
+      writerOutput: parsed.data.writerOutput,
       revisionsUsed: row.revisionsUsed,
       createdAt: row.createdAt,
     },

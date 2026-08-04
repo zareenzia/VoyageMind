@@ -2,7 +2,14 @@ import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TRIP_SCHEMA_VERSION, type CritiqueResult, type Destination, type Itinerary, type TripBrief } from "../schemas/index.js";
+import {
+  TRIP_SCHEMA_VERSION,
+  type CritiqueResult,
+  type Destination,
+  type Itinerary,
+  type TripBrief,
+  type WriterOutput,
+} from "../schemas/index.js";
 import type { TripRecordInput, TripStore } from "./store.js";
 
 const fixture = JSON.parse(
@@ -15,6 +22,11 @@ const fixture = JSON.parse(
   revisionsUsed: number;
 };
 
+/**
+ * Defaults to null prose, which is the honest default: the golden fixture
+ * predates the Writer, and a run whose Writer stage failed stores null too.
+ * The prose round-trip is asserted explicitly by its own case below.
+ */
 function makeTrip(overrides: Partial<TripRecordInput> = {}): TripRecordInput {
   return {
     id: randomUUID(),
@@ -26,10 +38,19 @@ function makeTrip(overrides: Partial<TripRecordInput> = {}): TripRecordInput {
     destinations: fixture.destinations,
     itinerary: fixture.itinerary,
     critique: fixture.critique,
+    writerOutput: null,
     revisionsUsed: fixture.revisionsUsed,
     ...overrides,
   };
 }
+
+const SAMPLE_PROSE: WriterOutput = {
+  title: "4 Days in Meghalaya — Waterfalls & Root Bridges",
+  summary: "You'll spend four days in the wettest place on earth.",
+  sections: [{ heading: "Day 1 — Sohra", body: "Head to **Nohkalikai Falls**, which usually opens around 9." }],
+  practical_tips: ["Pack a waterproof layer.", "Carry cash — cards are rarely accepted."],
+  caveats: ["Opening hours are estimated, not confirmed — check before travelling."],
+};
 
 /**
  * Runs the same assertions against any TripStore implementation — the
@@ -88,6 +109,36 @@ export function tripStoreContractTests(
       expect(result.trip.itinerary).toEqual(fixture.itinerary);
       expect(result.trip.critique).toEqual(fixture.critique);
       expect(result.trip.revisionsUsed).toBe(fixture.revisionsUsed);
+      expect(result.trip.writerOutput).toBeNull();
+    });
+
+    // Prose is stored rather than regenerated: regenerating needs a live model
+    // call and is non-deterministic, so a reopened trip would show different
+    // prose than the traveller actually read (D8).
+    it("round-trips the Writer's prose, including nested sections and caveats", async () => {
+      const trip = track(makeTrip({ writerOutput: SAMPLE_PROSE }));
+      await store.saveTrip(trip);
+
+      const result = await store.getTrip(trip.id);
+      expect(result?.ok).toBe(true);
+      if (!result?.ok) throw new Error("expected ok result");
+      expect(result.trip.writerOutput).toEqual(SAMPLE_PROSE);
+    });
+
+    // A null here is a real state, not an absence of data: the run predates the
+    // Writer, or its stage failed and was swallowed. It must survive as null
+    // rather than becoming the JSONB scalar 'null' or undefined.
+    it("distinguishes absent prose (null) from stored prose", async () => {
+      const withProse = track(makeTrip({ writerOutput: SAMPLE_PROSE }));
+      const without = track(makeTrip({ writerOutput: null }));
+      await store.saveTrip(withProse);
+      await store.saveTrip(without);
+
+      const a = await store.getTrip(withProse.id);
+      const b = await store.getTrip(without.id);
+      if (!a?.ok || !b?.ok) throw new Error("expected ok results");
+      expect(a.trip.writerOutput).not.toBeNull();
+      expect(b.trip.writerOutput).toBeNull();
     });
 
     it("flags a schema_version mismatch as a read-only degraded summary, never a throw", async () => {

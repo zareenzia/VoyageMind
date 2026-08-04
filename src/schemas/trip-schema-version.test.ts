@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { CritiqueResultSchema, DestinationSchema, ItinerarySchema, TripBriefSchema } from "./index.js";
+import {
+  CritiqueResultSchema,
+  DestinationSchema,
+  ItinerarySchema,
+  TripBriefSchema,
+  WriterOutputSchema,
+} from "./index.js";
 
 /**
  * TRIP_SCHEMA_VERSION (src/schemas/index.ts) is bumped by hand, and hand-bumped
@@ -49,5 +55,13 @@ describe("trip payload schema stability", () => {
 
   it("CritiqueResultSchema structural shape matches the last acknowledged version", () => {
     expect(structuralHash(CritiqueResultSchema)).toMatchSnapshot();
+  });
+
+  // Brought under the guard by D8, when writer_output joined the stored payload.
+  // It is nullable in the column and in TripPayloadSchema, so its ARRIVAL needed
+  // no version bump — but a later change to its shape can still break parsing of
+  // rows that do carry prose, which is exactly what this guard is for.
+  it("WriterOutputSchema structural shape matches the last acknowledged version", () => {
+    expect(structuralHash(WriterOutputSchema)).toMatchSnapshot();
   });
 });

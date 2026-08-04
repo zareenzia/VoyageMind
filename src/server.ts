@@ -57,6 +57,7 @@ async function persistTrip(
       destinations: pipelineResult.destinations,
       itinerary: pipelineResult.itinerary,
       critique: pipelineResult.critique,
+      writerOutput: pipelineResult.writerOutput,
       revisionsUsed: pipelineResult.revisionsUsed,
     });
   } catch (error) {

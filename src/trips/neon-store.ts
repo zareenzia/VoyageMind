@@ -41,8 +41,9 @@ export class NeonTripStore implements TripStore {
   async saveTrip(input: TripRecordInput): Promise<void> {
     await this.pool.query(
       `INSERT INTO trips
-         (id, owner_token, status, schema_version, request, brief, destinations, itinerary, critique, revisions_used)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+         (id, owner_token, status, schema_version, request, brief, destinations, itinerary, critique,
+          writer_output, revisions_used)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         input.id,
         input.ownerToken,
@@ -53,6 +54,10 @@ export class NeonTripStore implements TripStore {
         JSON.stringify(input.destinations),
         JSON.stringify(input.itinerary),
         JSON.stringify(input.critique),
+        // null, not JSON.stringify(null) — the latter stores the JSONB scalar
+        // 'null', which is not the same as a SQL NULL and would defeat
+        // `writer_output IS NULL` checks.
+        input.writerOutput === null ? null : JSON.stringify(input.writerOutput),
         input.revisionsUsed,
       ],
     );
@@ -61,7 +66,7 @@ export class NeonTripStore implements TripStore {
   async getTrip(id: string): Promise<TripReadResult | null> {
     const result = await this.pool.query(
       `SELECT id, owner_token, status, schema_version, request, brief, destinations, itinerary, critique,
-              revisions_used, created_at
+              writer_output, revisions_used, created_at
        FROM trips WHERE id = $1`,
       [id],
     );
@@ -77,6 +82,7 @@ export class NeonTripStore implements TripStore {
       destinations: row.destinations,
       itinerary: row.itinerary,
       critique: row.critique,
+      writerOutput: row.writer_output,
       revisionsUsed: row.revisions_used,
       createdAt: toIso(row.created_at),
     });

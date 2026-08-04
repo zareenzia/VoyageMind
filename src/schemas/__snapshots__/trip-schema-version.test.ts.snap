@@ -7,3 +7,5 @@ exports[`trip payload schema stability > DestinationSchema (array) structural sh
 exports[`trip payload schema stability > ItinerarySchema structural shape matches the last acknowledged version 1`] = `"8110c8280a1d259d12f68aa49bf6fe4936b800f5beba964382870106a9d9adf7"`;
 
 exports[`trip payload schema stability > TripBriefSchema structural shape matches the last acknowledged version 1`] = `"6882e506d94cd0987dddaefee997a2721882da409648c890b23182d818ddd5a2"`;
+
+exports[`trip payload schema stability > WriterOutputSchema structural shape matches the last acknowledged version 1`] = `"f4cc44b8c0f9428444fe33c5b1b13f5f3543f5b85b4425cc92f244a0503b8c2b"`;

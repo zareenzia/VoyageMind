@@ -1,0 +1,11 @@
+-- Adds the Writer agent's prose to the persisted trip payload.
+--
+-- Nullable on purpose, for two distinct reasons: rows written before the Writer
+-- existed have no prose at all, and a run whose Writer stage failed stores NULL
+-- too (that failure is swallowed by design — see runWriterStage in
+-- src/orchestrator.ts, which must never turn a validated Itinerary into a
+-- failed run).
+--
+-- No TRIP_SCHEMA_VERSION bump accompanies this: an added nullable column leaves
+-- every existing row parseable exactly as before. See docs/VOYAGEMIND_SPEC.md D8.
+ALTER TABLE trips ADD COLUMN IF NOT EXISTS writer_output JSONB;
