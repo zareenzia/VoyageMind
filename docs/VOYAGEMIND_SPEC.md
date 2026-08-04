@@ -255,7 +255,7 @@ minutes, and it also puts a network round-trip on the SSE hot path. A server res
 in-flight run is a real cost, but it isn't fixed by any of the three options: fixing it means
 checkpointing the *orchestrator's* pipeline state, not the event log, which is out of scope here.
 
-**Follow-up (not built):** an abandoned-run sweep — mark any in-memory run with no terminal
+**Follow-up (since built — 2026-07-31, `263f046`):** an abandoned-run sweep — mark any in-memory run with no terminal
 event after N minutes so a client fails cleanly instead of hanging on a dead connection after a
 restart. Code-only, no DB dependency; deferred because it's orthogonal to persistence.
 

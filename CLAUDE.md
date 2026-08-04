@@ -70,6 +70,33 @@ revision rounds**, enforced in `orchestrator.ts`, never left to the model's disc
 14. **Value plus a provenance flag is the standard shape for anything estimated** —
     `estimated`, `transit_source`, `dates_provisional`, `estimated_total_complete`. New
     estimated values follow it.
+15. **No authentication, user accounts, or session handling without its own reviewed step.**
+    Not as a side effect of persistence, a frontend task, or anything else — propose it, get
+    it approved, build it alone. This has now gone wrong twice: `6f9d20b` is literally
+    "remove premature auth UI," and the users/sessions/scrypt/JWT reimplementation preserved
+    on `phase1-persistence-auth` arrived attached to a persistence step that explicitly said
+    not to build a login screen. It is the one area where a silent failure leaks another
+    user's data, so it does not get built in passing. Until that step happens, ownership is
+    spec D7's anonymous owner token — a "my trips" filter, explicitly **not** an access check.
+16. **The spec is a review instrument, not a changelog.** A `D<n>` entry records a decision
+    when it is *taken*, with dated reasoning, so it can constrain what gets built next. Never
+    write one to describe or legitimise code that already exists. A spec that records what
+    happened cannot constrain anything, and a superseding entry backfilled after the fact
+    quietly converts a violated decision into an approved one. If code contradicts a
+    committed decision, that is a revert-or-approve conversation, not a documentation task.
+
+## Branch hygiene
+
+**Merge to main before starting the next task.** A branch that isn't merged is invisible to
+everything that comes after it — including the next session, which reads main, correctly
+concludes the work isn't there, and builds it again. That is exactly how the reviewed
+`TripStore` came to be reimplemented from scratch, bringing a duplicate migration runner and
+a second, incompatible `trips` table with it.
+
+**Before building something that might already exist, check.** `git branch -a -v` and
+`git log --oneline main..<branch>` cost nothing and answer the question "step N is done"
+doesn't: done *where*. "Reported as done" is not "on main" — when reporting work complete,
+say which branch it landed on.
 
 ## Testing
 
