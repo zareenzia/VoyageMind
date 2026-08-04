@@ -43,6 +43,12 @@ async function main() {
         console.log(`\n--- Practical Tips ---\n`);
         for (const tip of writerOutput.practical_tips) console.log(`  • ${tip}`);
       }
+      // Printed last and unmissable: the prose hedges estimated values, but the
+      // reader should be told outright rather than left to infer it.
+      if (writerOutput.caveats.length > 0) {
+        console.log(`\n--- Before you go ---\n`);
+        for (const caveat of writerOutput.caveats) console.log(`  ! ${caveat}`);
+      }
     }
     return;
   }

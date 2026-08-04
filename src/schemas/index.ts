@@ -547,18 +547,31 @@ export type PlanSection = z.infer<typeof PlanSectionSchema>;
  */
 export const WriterOutputSchema = z.object({
   title: z.string().max(120).describe("Trip title, e.g. '4 Days in Meghalaya — Waterfalls & Living Root Bridges'"),
-  summary: z.string().max(800).describe(
-    "A compelling 2-3 paragraph overview of the trip: highlights, vibe, who it's for. " +
-    "This appears above the day-by-day breakdown.",
+  summary: z.string().max(1400).describe(
+    "A compelling 2-3 short paragraph overview of the trip: highlights, vibe, who it's for. " +
+    "This appears above the day-by-day breakdown. Keep it under 1400 characters — a longer " +
+    "summary is rejected by validation, not truncated.",
   ),
   sections: z.array(PlanSectionSchema).min(1).describe(
     "One section per day of the trip, PLUS an optional 'Practical Tips' section at the " +
     "end covering budget notes, packing, transport logistics, and anything the traveller " +
-    "should know. Day sections should read as a narrative, not a bullet-point schedule.",
+    "should know. Day sections should read as a narrative, not a bullet-point schedule. " +
+    "Never write a HH:MM clock time here unless it is an opening/closing time whose " +
+    "estimated.hours is false — every other time in the itinerary is this system's own " +
+    "estimate and must be hedged ('opens around 9', not 'opens at 09:00').",
   ),
   practical_tips: z.array(z.string()).describe(
     "Short, actionable tips: what to pack, best transport, currency notes, safety. " +
-    "5-10 items. Not a repeat of the day-by-day content.",
+    "5-10 items. Not a repeat of the day-by-day content. The same rule about estimated " +
+    "times applies here.",
+  ),
+  caveats: z.array(z.string()).min(1).describe(
+    "Plain statements of what in this plan is NOT verified, so the reader learns it once " +
+    "directly instead of inferring it from hedged wording. ALWAYS include one saying that " +
+    "opening and closing hours are estimated rather than confirmed and should be checked " +
+    "before travelling. Add one when dates_provisional is true (the dates are a suggestion, " +
+    "not a booking) and one when estimated_total_complete is false (lodging and flights are " +
+    "not included in the total). State these flatly — this is the one place that does not hedge.",
   ),
 });
 export type WriterOutput = z.infer<typeof WriterOutputSchema>;

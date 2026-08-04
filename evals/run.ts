@@ -45,7 +45,118 @@ function get(obj: unknown, path: string): unknown {
   }, obj);
 }
 
-function assertExpectation(output: unknown, key: string, expected: unknown): string | null {
+/** Every piece of model-written prose in a WriterOutput, concatenated. */
+function proseOf(output: unknown): string {
+  const o = output as {
+    title?: unknown;
+    summary?: unknown;
+    sections?: { heading?: unknown; body?: unknown }[];
+    practical_tips?: unknown[];
+    caveats?: unknown[];
+  };
+  const parts: string[] = [];
+  for (const v of [o?.title, o?.summary]) if (typeof v === "string") parts.push(v);
+  for (const s of Array.isArray(o?.sections) ? o.sections : []) {
+    for (const v of [s?.heading, s?.body]) if (typeof v === "string") parts.push(v);
+  }
+  for (const list of [o?.practical_tips, o?.caveats]) {
+    for (const t of Array.isArray(list) ? list : []) parts.push(String(t));
+  }
+  return parts.join("\n");
+}
+
+/**
+ * Clock times the itinerary actually SOURCED — activities with
+ * `estimated.hours === false`. Those may legitimately be stated precisely; a
+ * blanket ban on precision would teach the model to hedge unconditionally,
+ * which loses real information and is its own kind of dishonesty.
+ */
+function sourcedClockTimes(input: unknown): { canonical: Set<string>; hours: Set<number> } {
+  const canonical = new Set<string>();
+  const hours = new Set<number>();
+  const itinerary = (input as { itinerary?: { days?: unknown[] } })?.itinerary;
+  for (const day of Array.isArray(itinerary?.days) ? itinerary.days : []) {
+    const stops = (day as { stops?: unknown[] })?.stops;
+    for (const stop of Array.isArray(stops) ? stops : []) {
+      const activity = (stop as { activity?: Record<string, unknown> })?.activity;
+      const estimated = activity?.["estimated"] as { hours?: unknown } | undefined;
+      if (estimated?.hours === false) {
+        for (const key of ["opens", "closes"]) {
+          const value = activity?.[key];
+          const match = typeof value === "string" ? /^(\d{1,2}):(\d{2})$/.exec(value) : null;
+          if (match) {
+            canonical.add(`${Number(match[1])}:${match[2]}`);
+            hours.add(Number(match[1]));
+          }
+        }
+      }
+    }
+  }
+  return { canonical, hours };
+}
+
+function assertExpectation(
+  output: unknown,
+  key: string,
+  expected: unknown,
+  input: Record<string, unknown>,
+): string | null {
+  // "prose_no_unhedged_estimated_times" — no precise clock time may appear in
+  // prose unless the itinerary actually sourced it. Guide always sets
+  // estimated.hours = true (src/agents/research.ts), so in practice every
+  // opens/closes in a real itinerary is a guess, and "the market opens at
+  // 10:00" reads as verified fact while dropping every provenance signal the
+  // rest of the system carries. Deliberately blunt: a false positive here
+  // costs one reworded sentence, a false negative ships a fabrication that is
+  // indistinguishable from real data downstream (CLAUDE.md rule 9).
+  if (key === "prose_no_unhedged_estimated_times") {
+    const prose = proseOf(output);
+    const allowed = sourcedClockTimes(input);
+    const problems: string[] = [];
+
+    // Compared canonically ("09:00" and "9:00" are the same time), or an
+    // exemption silently stops applying the moment the model drops a zero.
+    for (const match of prose.matchAll(/\b(\d{1,2}):(\d{2})\b/g)) {
+      const canonical = `${Number(match[1])}:${match[2]}`;
+      if (!allowed.canonical.has(canonical)) problems.push(`precise time "${match[0]}"`);
+    }
+    // "opens at 9" — unhedged by construction; a hedged form reads "opens
+    // around 9", which puts a word between "at" and the digit. Honours the
+    // same sourced exemption, including the bare-hour form ("opens at 6").
+    for (const match of prose.matchAll(/\b(opens?|closes?)\s+at\s+(\d{1,2})(?::(\d{2}))?\b/gi)) {
+      const isSourced = match[3]
+        ? allowed.canonical.has(`${Number(match[2])}:${match[3]}`)
+        : allowed.hours.has(Number(match[2]));
+      if (!isSourced) problems.push(`unhedged phrasing "${match[0]}"`);
+    }
+
+    if (problems.length === 0) return null;
+    const unique = [...new Set(problems)];
+    return (
+      `prose states ${unique.join(", ")} as fact, but the itinerary's hours are estimated` +
+      (allowed.canonical.size > 0
+        ? ` (sourced and therefore allowed: ${[...allowed.canonical].join(", ")})`
+        : "")
+    );
+  }
+
+  // "prose_excludes" — none of these strings may appear. Used as a fabrication
+  // trap: plausible nearby places that are NOT in the input itinerary.
+  if (key === "prose_excludes") {
+    const prose = proseOf(output).toLowerCase();
+    const found = (expected as string[]).filter((name) => prose.includes(name.toLowerCase()));
+    return found.length === 0
+      ? null
+      : `prose mentions ${found.join(", ")}, which is not in the input itinerary`;
+  }
+
+  // "prose_includes_any" — at least one of these must appear.
+  if (key === "prose_includes_any") {
+    const prose = proseOf(output).toLowerCase();
+    const hit = (expected as string[]).some((v) => prose.includes(v.toLowerCase()));
+    return hit ? null : `prose contains none of: ${(expected as string[]).join(", ")}`;
+  }
+
   // "<field>_not_null" — field must be present
   if (key.endsWith("_not_null")) {
     const field = key.slice(0, -"_not_null".length);
@@ -175,7 +286,7 @@ async function main() {
         }
 
         const problems = Object.entries(expect ?? {})
-          .map(([key, expectedValue]) => assertExpectation(output, key, expectedValue))
+          .map(([key, expectedValue]) => assertExpectation(output, key, expectedValue, input))
           .filter((p): p is string => p !== null);
 
         if (problems.length === 0) {

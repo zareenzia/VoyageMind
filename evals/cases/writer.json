@@ -157,6 +157,142 @@
     "why": "When dates_provisional is true, Writer must use 'Day 1' style headings rather than specific calendar dates. The output must still be structurally complete."
   },
   {
+    "id": "estimated-hours-must-be-hedged",
+    "itinerary": {
+      "brief_summary": "Two days of waterfalls and caves around Sohra.",
+      "days": [
+        {
+          "date": "2026-11-10",
+          "base_city": "Sohra",
+          "stops": [
+            {
+              "activity": {
+                "id": "nohkalikai-falls", "name": "Nohkalikai Falls",
+                "location": { "lat": 25.2756, "lng": 91.6866 }, "address": null,
+                "category": "waterfall", "duration_minutes": 90, "cost_usd_per_person": 2,
+                "opens": "09:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 3933644720,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "09:00", "end": "10:30",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            },
+            {
+              "activity": {
+                "id": "mawsmai-cave", "name": "Mawsmai Cave",
+                "location": { "lat": 25.2507, "lng": 91.7235 }, "address": null,
+                "category": "cave", "duration_minutes": 60, "cost_usd_per_person": 1,
+                "opens": "10:00", "closes": "16:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "node", "osm_id": 4567890,
+                "estimated": { "duration": true, "cost": true, "hours": true }
+              },
+              "start": "11:00", "end": "12:00",
+              "transit_minutes_from_previous": 30, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": null,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": null,
+      "estimated_total_usd": 6,
+      "estimated_total_complete": false,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "brief": {
+      "origin": "Dhaka",
+      "destinations": ["Meghalaya"],
+      "region_hint": null,
+      "date_expression": { "kind": "explicit", "date": "2026-11-10" },
+      "start_date": "2026-11-10",
+      "end_date": null,
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 2, "adults": 2, "children": 0 },
+      "budget_amount": 45000,
+      "budget_currency": "BDT",
+      "budget_includes_flights": false,
+      "pace": "moderate",
+      "interests": ["nature", "waterfalls"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "softNotes": [],
+    "expect": {
+      "prose_no_unhedged_estimated_times": true,
+      "prose_excludes": ["Wei Sawdong", "Mawlynnong", "Dawki", "Double Decker", "Nongriat"],
+      "caveats_min": 1,
+      "sections_min": 1
+    },
+    "why": "Every activity here has estimated.hours = true, which is what the Guide agent always produces (src/agents/research.ts tells it to always set estimated.hours = true). So no opening or closing time in this itinerary is a sourced fact, and prose asserting '09:00' or 'opens at 10' launders a guess into something that reads as verified — the exact failure CLAUDE.md rule 9 exists to prevent, and it drops the '~' provenance marker DayTimeline.tsx carefully renders. The prose_excludes list is a fabrication trap: five real Meghalaya attractions that are NOT in this itinerary, which a model padding a thin two-stop day would plausibly reach for. Transport hubs (Shillong, Guwahati) are deliberately NOT in that list, since naming an airport in a practical tip is legitimate advice rather than an invented activity."
+  },
+  {
+    "id": "sourced-hours-may-be-stated-precisely",
+    "itinerary": {
+      "brief_summary": "A morning at a temple with published opening hours.",
+      "days": [
+        {
+          "date": "2026-10-15",
+          "base_city": "Tokyo",
+          "stops": [
+            {
+              "activity": {
+                "id": "senso-ji", "name": "Sensō-ji Temple",
+                "location": { "lat": 35.7148, "lng": 139.7967 }, "address": "2-3-1 Asakusa, Taito",
+                "category": "attraction", "duration_minutes": 90, "cost_usd_per_person": 0,
+                "opens": "06:00", "closes": "17:00", "closed_days": [], "booking_required": false,
+                "notes": null, "osm_type": "way", "osm_id": 55667788,
+                "estimated": { "duration": true, "cost": false, "hours": false }
+              },
+              "start": "09:00", "end": "10:30",
+              "transit_minutes_from_previous": 0, "transit_source": "heuristic"
+            }
+          ],
+          "lodging_cost_usd": null,
+          "notes": null
+        }
+      ],
+      "flights_cost_usd": null,
+      "estimated_total_usd": 0,
+      "estimated_total_complete": false,
+      "dates_provisional": false,
+      "construction_notes": []
+    },
+    "brief": {
+      "origin": null,
+      "destinations": ["Tokyo"],
+      "region_hint": null,
+      "date_expression": { "kind": "explicit", "date": "2026-10-15" },
+      "start_date": "2026-10-15",
+      "end_date": null,
+      "nights": 1,
+      "flexible_dates": false,
+      "travellers": { "count": 1, "adults": 1, "children": 0 },
+      "budget_amount": null,
+      "budget_currency": null,
+      "budget_includes_flights": false,
+      "pace": "relaxed",
+      "interests": ["temples"],
+      "dietary": [],
+      "mobility_needs": [],
+      "visa_constraints": [],
+      "must_include": [],
+      "must_avoid": [],
+      "open_questions": []
+    },
+    "softNotes": [],
+    "expect": {
+      "prose_no_unhedged_estimated_times": true,
+      "prose_includes_any": ["06:00", "6:00", "6 AM", "6am", "6 am"]
+    },
+    "why": "The mirror of estimated-hours-must-be-hedged, and the reason the rule has to be conditional rather than 'never state a time'. This temple's hours ARE sourced (estimated.hours = false), so 06:00 may be stated precisely — prose_no_unhedged_estimated_times exempts it, and prose_includes_any requires it to actually survive into the text. Without this case, the honest fix for the other one is to hedge everything unconditionally, which throws away real sourced information and is its own dishonesty. Note prose_includes_any is the more brittle of the two assertions: it accepts several renderings of six o'clock, but a model that wrote 'at dawn' would fail it. That is intentional — losing a sourced value should be visible."
+  },
+  {
     "id": "adversarial-minimal-itinerary",
     "itinerary": {
       "brief_summary": "Single stop.",
