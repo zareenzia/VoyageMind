@@ -74,12 +74,16 @@ revision rounds**, enforced in `orchestrator.ts`, never left to the model's disc
     estimated values follow it.
 15. **No authentication, user accounts, or session handling without its own reviewed step.**
     Not as a side effect of persistence, a frontend task, or anything else — propose it, get
-    it approved, build it alone. This has now gone wrong twice: `6f9d20b` is literally
-    "remove premature auth UI," and the users/sessions/scrypt/JWT reimplementation preserved
-    on `phase1-persistence-auth` arrived attached to a persistence step that explicitly said
-    not to build a login screen. It is the one area where a silent failure leaks another
-    user's data, so it does not get built in passing. Until that step happens, ownership is
-    spec D7's anonymous owner token — a "my trips" filter, explicitly **not** an access check.
+    it approved, build it alone. This went wrong twice before it went right: `6f9d20b` is
+    literally "remove premature auth UI," and the users/sessions/scrypt/JWT reimplementation
+    preserved on `phase1-persistence-auth` arrived attached to a persistence step that
+    explicitly said not to build a login screen. It is the one area where a silent failure
+    leaks another user's data, so it does not get built in passing. **That step happened on
+    2026-08-07 — spec D9, proposed and approved before any code.** The rule now governs what
+    comes next: changing the access model (roles, account deletion, password reset, anything
+    that widens who can read a trip) is a D-entry conversation first. Authorization lives in
+    `TripStore` and is asserted in `store.contract.ts` against both implementations — never in
+    a route handler, which is one new route away from being forgotten.
 16. **The spec is a review instrument, not a changelog.** A `D<n>` entry records a decision
     when it is *taken*, with dated reasoning, so it can constrain what gets built next. Never
     write one to describe or legitimise code that already exists. A spec that records what
@@ -126,7 +130,7 @@ npm run eval -- <suite|case-id> # one suite, or any case whose id matches
 npm run test                    # unit tests (vitest)
 npm run typecheck               # server AND frontend — both, or it proves nothing
 npm run migrate                 # apply migrations/*.sql (needs DATABASE_URL_UNPOOLED)
-npm run test:neon               # TripStore contract against real Neon, manual only
+npm run test:neon               # TripStore + AuthStore contracts vs real Neon, manual only
 npm run build --prefix frontend # tsc -b && vite build
 ```
 
@@ -135,14 +139,21 @@ frontend build was broken on `main` for a day without anything reporting it.
 
 ## Current state
 
-Phase 1 in progress (2026-08-04). Built: Neon trip persistence (spec D7/D8), the React
-frontend with SSE run streaming and a rendered written plan, and the Writer agent — so the
-five-agent diagram above is current, not aspirational.
+**Phase 1 is complete (2026-08-07).** Built: Neon trip persistence (spec D7/D8), the React
+frontend with SSE run streaming and a rendered written plan, the Writer agent, and accounts
+with trip access control (spec D9) — so the five-agent diagram above is current, not
+aspirational.
 
-Deferred on purpose: authentication (rule 15). Ownership is still D7's anonymous owner token,
-which is a "my trips" filter and explicitly not an access check — `getTrip(id)` takes no token,
-so any trip is readable by id like an unlisted URL. Changing that is a D-entry conversation
-that happens *before* an auth step, not inside one.
+Access model, as of D9: email/password accounts, **server-side sessions** in an `httpOnly`
+cookie (not JWTs — revocation is a DELETE), and trip reads are an access check rather than a
+filter. `getTrip(id, viewer)` returns the same "not found" for a trip that doesn't exist and
+one you may not see, because distinguishing them is an existence oracle. Dual ownership:
+`user_id` decides when set, `owner_token` otherwise, and anonymous planning still works without
+signing up. Sharing is explicit — a nullable `share_token` per trip, revocable.
+
+Accepted and written down rather than discovered later: **no password reset and no email
+verification**, because there is no email provider (rule 10 — a keyed paid service needs its
+own conversation). The signup form says so.
 
 What was built, in what order, and why — including the 2026-08-04 branch-hygiene failure that
 cost a duplicate persistence implementation: `docs/PROJECT_LOG.md`.
