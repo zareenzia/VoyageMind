@@ -35,4 +35,24 @@ export const LIMITS = {
   /** Hard-stop in-memory run retention, even if terminal event never arrived.
    * Safety net only — the abandoned sweep should fire first. */
   runAbsoluteMaxMinutes: 30,
+  /** Failed logins allowed per email inside loginAttemptWindowMinutes before
+   * the address is refused outright. Rule 4 applies to an attacker's loop the
+   * same as to ours. Counted per email rather than per IP: an IP is shared by
+   * everyone behind a NAT and trivially rotated by an attacker, so it locks out
+   * the wrong people and stops the wrong ones. */
+  maxLoginAttempts: 10,
+  /** Sliding window for maxLoginAttempts. */
+  loginAttemptWindowMinutes: 15,
+  /** How long a session cookie stays valid. Absolute, not sliding: a session is
+   * not extended by use, so a stolen cookie has a bounded life no matter how
+   * actively it is used. */
+  sessionLifetimeDays: 30,
+  /** Longest accepted trip title. A label, not a document — and an unbounded
+   * user-supplied string on a row anyone can create is a storage-growth
+   * primitive. */
+  maxTripTitleLength: 120,
+  /** Minimum password length accepted at signup. Length is the only rule —
+   * composition rules ("one symbol, one digit") measurably push people toward
+   * shorter, more predictable passwords, which is the opposite of the goal. */
+  minPasswordLength: 10,
 } as const;

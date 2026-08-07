@@ -305,6 +305,98 @@ nowhere in `frontend/src/`, so prose currently reaches a reader only through
 `npm run dev -- --pretty`. Until that lands, `WriterOutput.caveats` — which exists so the reader is
 told once, plainly, that opening hours are estimated rather than confirmed — is invisible on the
 web path, and the web reader gets the hedged wording without the explanation for it.
+*(Since built — `edaba2e`.)*
+
+### D9 — Accounts: identity and authorization land together, or neither lands (2026-08-07)
+
+**Decision:** VoyageMind gets email/password accounts with **server-side sessions**, and the same
+step makes trip reads an **access check** rather than a filter. `getTrip` gains a viewer argument
+and returns "not found" for a trip the viewer cannot see. Sharing, which D7 provided implicitly by
+making every trip readable by id, becomes explicit and opt-in: a trip carries a nullable
+`share_token`, and a trip is readable by its owner or by someone presenting its share token.
+Nothing is readable by bare id any more.
+
+**Why identity and authorization cannot be split across two steps:** an accounts system that does
+not gate reads is strictly *worse* than no accounts. D7's model is defensible precisely because
+nothing about it looks private — no login, no account, and this document says in as many words
+that a trip is readable like an unlisted URL. Put a login screen in front of that same model and
+the honesty disappears: users read a password prompt as a privacy boundary, and every trip stays
+enumerable-by-id behind it. That gap — a UI implying protection over storage that has none — is
+the shape of failure CLAUDE.md rule 15 exists to prevent, and it would be *created* by shipping
+the identity half alone. So both halves ship together, or the step does not start.
+
+**Why server-side sessions and not JWTs:** a JWT cannot be revoked without a server-side denylist,
+at which point the server keeps session state anyway, with worse ergonomics and a second source of
+truth. The property JWTs buy — stateless verification across services that don't share a database
+— is worth nothing here: rule 7 says monolith until Phase 3, and there is one server and one
+Postgres. Sessions live in a `sessions` table with an expiry; the client holds an opaque id in an
+`httpOnly; SameSite=Lax` cookie (`Secure` whenever the request arrives over HTTPS). Not
+localStorage: `httpOnly` is the difference between "an XSS bug reads the session" and "it doesn't",
+and the preserved implementation on `phase1-persistence-auth` put a JWT in localStorage, giving up
+that property for a statelessness nobody needs. The session id is stored **hashed** (SHA-256), so
+a leaked database dump is not a set of live sessions.
+
+**Why email/password and not magic links or third-party OAuth:** magic links need transactional
+email, a paid keyed provider — rule 10 says ask first, and this is not the step to ask inside.
+OAuth providers need registered apps and per-environment callback URLs, and add a second external
+identity dependency to a project whose one external dependency already expires with an opaque
+error. Hashing is `scrypt` from `node:crypto` — standard library, no native dependency, no key.
+
+**The cost of that, stated rather than discovered:** no email means **no password reset and no
+email verification**. An account whose password is lost is an account whose trips are unreachable,
+and the email field is unverified text. Both are accepted for Phase 1; neither is a defect to be
+filed later. The fix for both is an email provider, which is its own decision entry. The signup UI
+says so rather than implying a recovery path that does not exist.
+
+**Login gets a hard cap, like every other loop (rule 4):** `LIMITS.maxLoginAttempts` over
+`LIMITS.loginAttemptWindowMinutes`, counted per email, in `src/config.ts`. A bad password and an
+unknown email return the identical response and take the same code path, so the endpoint is not an
+oracle for which addresses have accounts.
+
+**Dual ownership, during and after the migration.** `trips` keeps `owner_token` and gains a
+nullable `user_id`. A trip is owned by `user_id` when it is non-null and by `owner_token`
+otherwise; there is no state where both decide. Anonymous runs keep working — signup is not a
+precondition for planning a trip, which would trade the product's only frictionless path for an
+accounts system nobody has asked for yet.
+
+**Claiming existing trips is trust-on-presentation, and that is a real limit.** D7 anticipated
+"attaching claimed tokens to a user row". A logged-in browser presents the owner token from its
+localStorage and the trips holding that token get `user_id` set. There is no way to verify the
+presenter is the originator — the token is a bearer capability with no secret behind it — so
+claiming is exactly as strong as that token's confidentiality and no stronger.
+
+**Which makes one thing a prerequisite rather than a part of this step:** `owner_token` travelled
+in the **query string** (`GET /trips?owner_token=…`, `DELETE /trips/:id?owner_token=…`). Query
+strings land in server access logs, browser history, and `Referer` headers on any outbound link.
+Tolerable for a list filter; not tolerable for something claimable into an account, where it would
+let anyone with log access take ownership of another person's trips. It moves to an
+`X-Owner-Token` request header, which stands on its own merits and lands before the accounts work,
+not inside it.
+
+**What this supersedes in D7, precisely:** the sentences "it is not an access-control check" and
+"Any trip stays readable by id, the same as an unlisted URL". Everything else in D7 and all of D8
+stand unchanged — the hybrid store, one-row-on-terminal-event, JSONB payloads,
+`TRIP_SCHEMA_VERSION` and its drift guard, and the degrade-to-read-only gate. The owner token
+survives as the anonymous half of dual ownership; what it loses is the guarantee that it never
+gates anything.
+
+**Where a mistake here would actually hide:** in the gap between the two store implementations. So
+authorization lives in the store, not in route handlers, and every case — owner reads, non-owner
+refused, share-token reads, anonymous vs. user ownership, claim transfer — goes into
+`store.contract.ts` and runs against both `InMemoryTripStore` and `NeonTripStore`. A rule enforced
+in a route handler is one new route away from being forgotten, and this is the one area where the
+failure is silent and leaks someone else's data.
+
+**Alternatives considered.** *(1) Keep reads open, gate only mutations* — coherent and much
+cheaper; rejected for the reason in the second paragraph. *(2) Defer accounts past Phase 1
+entirely* — genuinely reasonable, since no story needs multi-user and D7's model is honest as it
+stands; rejected because "my trips" is device-bound today, so clearing localStorage loses every
+saved trip with no recovery, which is a present defect rather than a hypothetical one. *(3) Take
+the preserved `phase1-persistence-auth` implementation as a starting point* — rejected as a whole
+(JWT in localStorage, no store contract, `@neondatabase/serverless` in a long-running server, a
+duplicate `trips` table); its scrypt password module was the one piece worth keeping, and it was
+rewritten here against the same standard-library primitive rather than cherry-picked, since it
+needed the attempt cap and timing-safe comparison anyway.
 
 ---
 
@@ -576,13 +668,21 @@ Meghalaya, BDT 45,000"` produces a `pass`-verdict itinerary built entirely from 
 places, with provisional dates correctly landing outside the monsoon window and
 lodging/flights correctly `null` rather than guessed.
 
-### Phase 1 — Product ← YOU ARE HERE
-- Neon Postgres persistence, trip versions, migrations
-- React frontend, streaming progress
-- **Writer Agent** — `Itinerary` → user-facing plan, built alongside the frontend it renders
-  for (moved from the Phase 0 agent list — see §7.1)
-- Auth and user accounts
-- Trip CRUD, save, revisit
+### Phase 1 — Product ✅ complete (2026-08-07)
+- [x] Neon Postgres persistence, migrations (D7)
+- [x] React frontend, streaming progress over SSE with `Last-Event-ID` replay
+- [x] **Writer Agent** — `Itinerary` → user-facing plan, built alongside the frontend it renders
+      for (moved from the Phase 0 agent list — see §7.1), 5/5 evals
+- [x] Auth and user accounts — email/password, server-side sessions, trip access control (D9)
+- [x] Trip CRUD: save, revisit, rename, delete, explicit share links
+
+**Done when:** a trip planned in the browser is saved, reopenable, renameable, shareable by an
+opt-in link, and readable only by its owner or someone holding that link. **Verified**:
+`npm run typecheck` (server + frontend) silent, `npm run test` green, and the TripStore/AuthStore
+contracts run against both the in-memory fakes and real Neon.
+
+Deliberately **not** in Phase 1, and not defects: password reset and email verification (both
+need an email provider — its own decision entry), account deletion, and roles.
 
 **Phase 1 HTTP/SSE shape (decided 2026-07-31):**
 - `POST /runs` with JSON body creates a run and returns `{ "run_id": "<uuid>" }`.

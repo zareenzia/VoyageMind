@@ -1,13 +1,15 @@
 # VoyageMind — Project Log
 
-**Last updated:** 4 August 2026
-**Status:** Phase 1 in progress. All five agents built and evaluated. Neon trip persistence
-(D7/D8), React frontend with SSE run streaming and a rendered written plan, and the Writer
-agent. Authentication is deliberately *not* built — see §8, where trying to build it as a side
-effect cost a day.
+**Last updated:** 7 August 2026
+**Status:** **Phase 1 complete.** All five agents built and evaluated. Neon trip persistence
+(D7/D8), React frontend with SSE run streaming and a rendered written plan, the Writer agent,
+and accounts with real trip access control (D9). Authentication was the last piece and the one
+that had already gone wrong twice by being built as a side effect — §8 is that story, §9 is how
+it was finally done.
 
-Read §5 for the design lesson (five blocked fabrications) and §8 for the process one (a branch
-that was reported done, never merged, and got reimplemented from scratch).
+Read §5 for the design lesson (five blocked fabrications), §8 for the process one (a branch
+that was reported done, never merged, and got reimplemented from scratch), and §9 for the one
+about scope: why an accounts system that doesn't gate reads is worse than no accounts at all.
 
 ---
 
@@ -280,7 +282,7 @@ One contract (`store.contract.ts`) runs against both `InMemoryTripStore` (in `np
 divergent fake — the alternative is green tests over a broken production path, which §8 turns
 out to be partly about.
 
-**Frontend + SSE.** A 30–90s pipeline with no feedback looks hung rather than slow (§11), which
+**Frontend + SSE.** A 30–90s pipeline with no feedback looks hung rather than slow (§12), which
 is why the orchestrator emitted progress events from day one. The frontend attaches over SSE
 with replay from `Last-Event-ID`, plus a sweep that marks a run abandoned after 5 minutes of
 silence so a client fails cleanly instead of hanging on a dead connection. A saved trip is
@@ -288,6 +290,12 @@ converted into the same `RunEvent` shape a live run produces, so both render thr
 
 **Writer.** The fifth agent, and the only one whose output is prose rather than data for a
 downstream agent. What it took to make that prose honest is §8's second half.
+
+**Accounts and access control (spec D9).** Email/password, server-side sessions in an `httpOnly`
+cookie, and trip reads that are an access check rather than a filter. Dual ownership: `user_id`
+decides when set, `owner_token` otherwise, so planning a trip still needs no account. Sharing is
+an explicit, revocable `share_token` per trip. Why it had to be one step rather than two, and the
+four places "not yours" had to be made indistinguishable from "doesn't exist", is §9.
 
 ---
 
@@ -416,7 +424,104 @@ from a real one.
 
 ---
 
-## 9. Setup log — what broke and why (historical; environment/tooling issues from early setup)
+## 9. 7 August 2026 — accounts, and the access check that came with them
+
+The last Phase 1 item, and the one CLAUDE.md rule 15 had been holding back through two previous
+attempts to build it sideways. This time it started as a decision entry (spec D9), written and
+approved before any code existed.
+
+### The argument that shaped the whole step
+
+The obvious plan was to add accounts and leave trip reads alone — D7's model, where any trip is
+readable by id like an unlisted URL, plus a login screen on top. That is cheaper, and it is
+wrong, for a reason worth writing down:
+
+**An accounts system that does not gate reads is strictly worse than no accounts.** D7's model
+is defensible precisely *because* nothing about it looks private. There is no login, no
+"my account," and the spec says in as many words that a trip is readable like an unlisted URL.
+Put a password prompt in front of that same storage and the honesty evaporates: users read a
+login screen as a privacy boundary, and every trip stays enumerable-by-id behind it. The gap
+isn't discovered by adding auth — it is *created* by adding half of it.
+
+So identity and authorization shipped together. `getTrip(id)` became `getTrip(id, viewer)`, and
+D7's implicit sharing became an explicit, revocable `share_token`, because gating reads without
+replacing sharing would have silently removed the ability to send someone your itinerary.
+
+### What "not yours" has to look like
+
+`getTrip` returns the same `null` for a trip that doesn't exist and one the viewer may not see,
+and both surface as the same 404 with the same body. Distinguishing them turns the endpoint into
+an existence oracle over other people's trip ids — you learn which ids are real by watching which
+ones 403 instead of 404. The same reasoning drove three other choices:
+
+- **Login reports one failure for a wrong password and for an unknown address**, and spends the
+  same scrypt work on both (`spendDummyVerify`). Without the dummy verify the *timing* still
+  separates them — an unknown email returns in microseconds, a real one in ~100ms — which would
+  have made the identical response cosmetic.
+- **`ownerToken` was removed from the trip read type entirely**, not stripped in a route handler.
+  It is the exact bearer value `claimTrips` accepts, so echoing it to someone holding a share
+  link would let a person legitimately shown a trip attach it to their own account. A value that
+  never leaves the store cannot be leaked by a route added later.
+- **The owner token moved from the query string to an `X-Owner-Token` header** before any account
+  work started. Query strings land in access logs, browser history, and `Referer` on outbound
+  links; that is tolerable for a list filter and not for something claimable into an account.
+  D9 called it a prerequisite rather than part of the step for that reason.
+
+### Sessions, not JWTs
+
+A JWT cannot be revoked without a server-side denylist — at which point you are keeping session
+state anyway, with worse ergonomics and two sources of truth. The property JWTs buy is stateless
+verification across services that don't share a database, which is worth exactly nothing under
+rule 7's one server and one Postgres. Sessions are rows with an expiry; the client holds an
+opaque token in an `httpOnly; SameSite=Lax` cookie, `Secure` whenever the request arrived over
+TLS. Only the SHA-256 of the token is stored, so a leaked table is a list of dead hashes.
+
+Two details that would have been silent bugs:
+
+- **`Secure` is conditional, not hard-coded.** Setting it unconditionally makes sign-in fail on
+  `http://localhost` in a way that produces no error anywhere: the browser accepts the
+  `Set-Cookie` and then simply never sends the cookie back.
+- **Expiry is in the `WHERE` clause, not only in the sweep.** Left to the sweep, a session stays
+  usable until the timer next fires, which is the exact window an absolute lifetime exists to
+  close.
+
+### Where the tests went, and why there
+
+Ownership is now expressed *twice* — as `isTripOwner` in TypeScript and as a SQL predicate in
+`NeonTripStore`, because the database has to enforce it inside the same statement as the UPDATE
+rather than in a read-then-write. Two encodings of one access rule is exactly the thing that
+drifts silently, and when this one drifts it leaks another user's trip.
+
+So authorization lives in the store, never in a route handler, and every case goes into
+`store.contract.ts`, which runs against `InMemoryTripStore` in `npm test` and `NeonTripStore`
+in `npm run test:neon`. The contract went from 8 cases to 25: non-owner refused, share reads,
+share readers refused delete/rename/re-share, the owner token ceasing to work once a trip is
+claimed, and a claim being unable to steal a trip that already belongs to someone. `AuthStore`
+got the same treatment.
+
+Test count went 156 → 239 over the step. None of that is coverage for its own sake: rule 15 says
+this is the one area where a silent failure leaks another user's data, and §8's through-line was
+that every failure that day was a *verification* failure rather than a logic one.
+
+### What was deliberately not built
+
+No password reset and no email verification, because there is no email provider and adding a
+paid keyed one is a rule-10 conversation, not a detail inside an auth step. That is a real
+limitation — a lost password is a lost account — so the signup form says so in plain words
+rather than implying a recovery path that does not exist. Also absent: roles, account deletion,
+and any notion of collaboration.
+
+### The through-line
+
+§8's lesson was about verification. This one is about **scope integrity**: the cheap version of
+this task (login screen, reads unchanged) would have typechecked, passed every test that existed
+at the time, and shipped a privacy claim the storage did not honour. The thing that caught it was
+writing the decision down *before* the code, which is the entire point of rule 16 — a spec entry
+taken as a decision constrains what gets built; one backfilled as a description cannot.
+
+---
+
+## 10. Setup log — what broke and why (historical; environment/tooling issues from early setup)
 
 | # | Problem | Cause | Fix |
 |---|---|---|---|
@@ -436,7 +541,7 @@ whole document of: an eval catching a hole in the *design*, not the prompt.
 
 ---
 
-## 10. Running it
+## 11. Running it
 
 ```bash
 npm run dev -- "4 days in Meghalaya, BDT 45,000"   # full pipeline, validated Itinerary JSON
@@ -446,11 +551,15 @@ npm run build --prefix frontend                     # tsc -b && vite build
 npm run eval                                        # all five suites
 npm run eval -- writer                              # one suite by name
 npm run eval -- <case-id-substring>                 # or any case whose id matches
-npm run test                                        # vitest — checks/, tools/, trips/, agents/
+npm run test                                        # vitest — checks/, tools/, trips/, auth/, http/, agents/
 npm run typecheck                                   # server AND frontend, should print nothing
 npm run migrate                                     # migrations/*.sql, needs DATABASE_URL_UNPOOLED
-npm run test:neon                                   # TripStore contract vs real Neon, manual
+npm run test:neon                                   # TripStore + AuthStore contracts vs real Neon, manual
 ```
+
+`npm run migrate` must be run once after pulling the D9 work — `0003_accounts_and_access.sql`
+adds `users`, `sessions`, and the ownership/sharing columns on `trips`. The server starts
+without it, and every account and trips request then fails against a table that isn't there.
 
 A filter matching no cases **exits 1** and lists the available suites and case ids. It used to
 print `0/0 passed` and exit 0, which made a typo indistinguishable from a green run — see §8.
@@ -480,16 +589,17 @@ cp .env.example .env
 **Do not copy the office API key to the personal machine.** It belongs to an employer's
 Console workspace.
 
-### Auth, current state
+### Model-provider auth, current state
 
-Running on the OAuth session from the VS Code Claude Code extension, not the API key (that
-workspace has $0 balance). Fine for development; expires periodically with an opaque auth
+Not to be confused with the product's user accounts (§9) — this is how the app authenticates to
+Anthropic. Running on the OAuth session from the VS Code Claude Code extension, not the API key
+(that workspace has $0 balance). Fine for development; expires periodically with an opaque auth
 error (see #7 above). Anything unattended or user-facing needs proper API billing with a
 spend cap before it runs.
 
 ---
 
-## 11. Cost and latency
+## 12. Cost and latency
 
 **Measured, not assumed (2026-07-28):** a single Overpass query over a full state's bounding
 box (~300km across, all categories) took 43 seconds, before any model call. With
@@ -510,7 +620,7 @@ Budget for re-runs, and read which case failed rather than the pass count.
 
 ---
 
-## 12. Working with Claude Code on this repo
+## 13. Working with Claude Code on this repo
 
 Open the VS Code integrated terminal in `D:\VoyageMind` and run `claude`. It reads
 `../CLAUDE.md` automatically.

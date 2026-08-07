@@ -1,3 +1,4 @@
+import { AuthPanel } from "./AuthPanel.tsx";
 import { MyTripsPanel } from "./MyTripsPanel.tsx";
 
 interface Props {
@@ -21,7 +22,10 @@ export function Navbar({ onHome, onSelectTrip }: Props) {
           </div>
         </button>
 
-        <MyTripsPanel onSelectTrip={onSelectTrip} />
+        <div className="flex items-center gap-1">
+          <MyTripsPanel onSelectTrip={onSelectTrip} />
+          <AuthPanel />
+        </div>
       </div>
     </nav>
   );

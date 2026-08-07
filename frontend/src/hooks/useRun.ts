@@ -1,6 +1,6 @@
 import { useCallback, useReducer, useRef } from "react";
 import { RunEventSchema, type PipelineStage, type RunEvent } from "@shared/schemas/index.ts";
-import { getOwnerToken } from "../lib/ownerToken.ts";
+import { apiSend } from "../lib/api.ts";
 
 // --- State types ---
 //
@@ -249,13 +249,11 @@ export function useRun() {
   const startRun = useCallback(
     async (request: string) => {
       dispatch({ type: "reset" });
-      const res = await fetch("/runs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request, owner_token: getOwnerToken() }),
-      });
-      if (!res.ok) throw new Error(`POST /runs failed: ${res.status}`);
-      const { run_id } = (await res.json()) as { run_id: string };
+      // The owner token and the session cookie are both attached by apiSend —
+      // the server decides from them whether the resulting trip is anonymous or
+      // belongs to an account, and it decides that now rather than when the
+      // 90-second pipeline finishes.
+      const { run_id } = await apiSend<{ run_id: string }>("POST", "/runs", { request });
       dispatch({ type: "start", runId: run_id });
       subscribe(run_id);
       return run_id;
