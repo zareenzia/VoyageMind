@@ -79,14 +79,34 @@ const SAMPLE_PROSE: WriterOutput = {
  * longer deletable by the browser that created it) so a run against a real,
  * possibly shared Neon branch doesn't leave rows behind.
  */
-export function tripStoreContractTests(
-  label: string,
-  createStore: () => TripStore | Promise<TripStore>,
-  teardownStore?: (store: TripStore) => Promise<void> | void,
-): void {
+export interface TripStoreContractOptions {
+  createStore: () => TripStore | Promise<TripStore>;
+  /**
+   * Creates and removes real `users` rows for the ids these tests attach trips
+   * to. Required for any implementation whose `trips.user_id` is a foreign key;
+   * omitted for the in-memory fake, which has no users table to reference.
+   *
+   * That asymmetry is worth naming rather than hiding: the fake cannot model
+   * referential integrity, so **only the Neon run proves a trip can't be
+   * claimed by a user id that doesn't exist.** Leaving it out is what made the
+   * first real-Neon run fail with `trips_user_id_fkey` on five cases that were
+   * green against the fake — the contract catching a divergence in the contract
+   * itself, which is the same class of gap it exists to catch in the stores.
+   */
+  users?: {
+    create(userId: string): Promise<void>;
+    remove(userId: string): Promise<void>;
+  };
+  teardown?: (store: TripStore) => Promise<void> | void;
+}
+
+export function tripStoreContractTests(label: string, options: TripStoreContractOptions): void {
+  const { createStore, users, teardown } = options;
+
   describe(`TripStore contract (${label})`, () => {
     let store: TripStore;
     const created: { id: string; viewers: Viewer[] }[] = [];
+    const provisionedUsers: string[] = [];
 
     beforeEach(async () => {
       store = await createStore();
@@ -99,11 +119,31 @@ export function tripStoreContractTests(
           if (await store.deleteTrip(entry.id, viewer)) break;
         }
       }
+      // After the trips: deleting a user cascades to their trips, so this also
+      // sweeps up any row the loop above couldn't claim ownership of.
+      while (provisionedUsers.length > 0) {
+        await users?.remove(provisionedUsers.pop()!);
+      }
     });
 
     afterAll(async () => {
-      if (teardownStore) await teardownStore(store);
+      if (teardown) await teardown(store);
     });
+
+    /**
+     * A user id backed by a real row wherever rows are required. Used for every
+     * id a trip is *written* with; a viewer id that only ever appears in a read
+     * predicate stays a bare randomUUID, because "a user who does not exist
+     * cannot see this trip" is a case worth keeping.
+     */
+    async function newUserId(): Promise<string> {
+      const id = randomUUID();
+      if (users) {
+        await users.create(id);
+        provisionedUsers.push(id);
+      }
+      return id;
+    }
 
     function track(trip: TripRecordInput): TripRecordInput {
       const viewers: Viewer[] = [anon(trip.ownerToken)];
@@ -209,7 +249,7 @@ export function tripStoreContractTests(
     });
 
     it("lets the owning user read a user-owned trip and refuses every other user", async () => {
-      const userId = randomUUID();
+      const userId = await newUserId();
       const trip = track(makeTrip({ userId }));
       await store.saveTrip(trip);
 
@@ -228,7 +268,7 @@ export function tripStoreContractTests(
      * trips forever.
      */
     it("stops honouring the owner token once a trip belongs to a user", async () => {
-      const userId = randomUUID();
+      const userId = await newUserId();
       const ownerToken = randomUUID();
       const trip = track(makeTrip({ ownerToken, userId }));
       await store.saveTrip(trip);
@@ -357,7 +397,7 @@ export function tripStoreContractTests(
 
     it("moves unclaimed trips to a user, and out of the anonymous list", async () => {
       const ownerToken = randomUUID();
-      const userId = randomUUID();
+      const userId = await newUserId();
       const trip = track(makeTrip({ ownerToken }));
       await store.saveTrip(trip);
       alsoOwnedBy(trip.id, asUser(userId));
@@ -371,7 +411,7 @@ export function tripStoreContractTests(
     it("claims only trips holding the presented token, and never another owner's", async () => {
       const mine = randomUUID();
       const theirs = randomUUID();
-      const userId = randomUUID();
+      const userId = await newUserId();
       const a = track(makeTrip({ ownerToken: mine }));
       const b = track(makeTrip({ ownerToken: theirs }));
       await store.saveTrip(a);
@@ -390,8 +430,11 @@ export function tripStoreContractTests(
      */
     it("cannot re-claim a trip that already belongs to a user", async () => {
       const ownerToken = randomUUID();
-      const firstUser = randomUUID();
-      const attacker = randomUUID();
+      const firstUser = await newUserId();
+      // The attacker gets a real row too. With a fabricated id this would pass
+      // against Neon for the wrong reason — a foreign-key violation rather than
+      // the `user_id IS NULL` guard — and the guard is the thing under test.
+      const attacker = await newUserId();
       const trip = track(makeTrip({ ownerToken, userId: firstUser }));
       await store.saveTrip(trip);
 

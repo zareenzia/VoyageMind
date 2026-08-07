@@ -34,18 +34,52 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-tripStoreContractTests(
-  "neon",
-  () => new NeonTripStore(),
-  async (store) => {
-    await (store as NeonTripStore).close();
+/**
+ * One store per suite, not one per test. The contract calls `createStore` in
+ * `beforeEach`, which is free for an in-memory fake and decidedly not free
+ * here — a `new NeonTripStore()` per test means a new `pg.Pool` per test, so
+ * connections accumulate for the whole run and only the last pool is ever
+ * closed. Both stores are stateless, so a single instance is correct.
+ */
+const tripStore = new NeonTripStore();
+const authStore = new NeonAuthStore();
+
+/**
+ * `trips.user_id` is a real foreign key here, so a trip attached to a user id
+ * with no `users` row is rejected by the database. The contract provisions ids
+ * through this rather than fabricating them — see TripStoreContractOptions.users
+ * for why the in-memory fake cannot do the same and what that means.
+ *
+ * A throwaway password hash: these rows exist to satisfy referential integrity
+ * and are never authenticated against, so spending scrypt on them would add
+ * ~100ms per test for nothing.
+ */
+const users = {
+  async create(userId: string): Promise<void> {
+    const result = await authStore.createUser({
+      id: userId,
+      email: `trip-contract-${userId}@example.test`,
+      passwordHash: "scrypt$16384$8$1$c2FsdA==$aGFzaA==",
+    });
+    if (!result.ok) throw new Error(`could not provision contract user ${userId}: ${result.reason}`);
   },
-);
+  async remove(userId: string): Promise<void> {
+    await authStore.deleteUser(userId);
+  },
+};
+
+tripStoreContractTests("neon", {
+  createStore: () => tripStore,
+  users,
+  teardown: async () => {
+    await tripStore.close();
+  },
+});
 
 authStoreContractTests(
   "neon",
-  () => new NeonAuthStore(),
-  async (store) => {
-    await (store as NeonAuthStore).close();
+  () => authStore,
+  async () => {
+    await authStore.close();
   },
 );

@@ -503,6 +503,27 @@ Test count went 156 → 239 over the step. None of that is coverage for its own 
 this is the one area where a silent failure leaks another user's data, and §8's through-line was
 that every failure that day was a *verification* failure rather than a logic one.
 
+**And the first real-Neon run failed, which is the point of having it.** Five cases died on
+`trips_user_id_fkey`: the contract had been fabricating user ids with `randomUUID()` and
+attaching trips to them. Against the in-memory fake that is fine — it has no users table and no
+foreign key. Against Postgres it is rejected, correctly. So the divergence was in the *contract*,
+not in either store, which is the same class of gap the contract exists to catch one level down:
+a fake that cannot model referential integrity will pass things the real store must refuse. Fixed
+with a `users` provisioning hook the Neon harness implements and the fake omits, with the
+asymmetry written down rather than papered over.
+
+Worth keeping: the attacker id in "cannot re-claim a trip that already belongs to a user" is now
+provisioned too. Left fabricated, that case would have passed against Neon for the wrong
+reason — a foreign-key violation instead of the `user_id IS NULL` guard that is actually under
+test.
+
+Two more things only a real run surfaces. The contract calls `createStore` in `beforeEach`, which
+is free for a fake and means **a new `pg.Pool` per test** against Neon — connections accumulating
+all run, with only the last one ever closed. And the 5s default timeout is tuned for in-process
+fakes; against a scale-to-zero instance it fails on latency, which reads as a defect rather than
+as a slow network. One store per suite and a 30s timeout took the run from 156s to 72s, all 36
+green, and the database back to exactly the rows it started with.
+
 ### What was deliberately not built
 
 No password reset and no email verification, because there is no email provider and adding a

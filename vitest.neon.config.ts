@@ -9,5 +9,11 @@ process.loadEnvFile();
 export default defineConfig({
   test: {
     include: ["scripts/check-neon.test.ts"],
+    // Every assertion here is a network round trip to Neon, and a scale-to-zero
+    // instance adds a cold start to the first one. The 5s default is tuned for
+    // in-process fakes and fails these on latency rather than on behaviour —
+    // which is the worst kind of red, since it looks like a real defect.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
 });
