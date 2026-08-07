@@ -25,13 +25,21 @@ function getTripIdFromUrl(): string | null {
 function setRunIdInUrl(runId: string) {
   const url = new URL(window.location.href);
   url.searchParams.delete("trip");
+  url.searchParams.delete("share");
   url.searchParams.set("run", runId);
   window.history.pushState({}, "", url.toString());
 }
 
+/**
+ * Drops any `share` token still in the URL. Opening one of your own trips is
+ * not a share read, and leaving a stale token in the address bar would keep
+ * lib/api.ts attaching it to unrelated requests — a share token must not follow
+ * the user around the app after they navigate away from the shared trip.
+ */
 function setTripIdInUrl(tripId: string) {
   const url = new URL(window.location.href);
   url.searchParams.delete("run");
+  url.searchParams.delete("share");
   url.searchParams.set("trip", tripId);
   window.history.pushState({}, "", url.toString());
 }
@@ -40,6 +48,7 @@ function clearRunIdFromUrl() {
   const url = new URL(window.location.href);
   url.searchParams.delete("run");
   url.searchParams.delete("trip");
+  url.searchParams.delete("share");
   window.history.pushState({}, "", url.toString());
 }
 
